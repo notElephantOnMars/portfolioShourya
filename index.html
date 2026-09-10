@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shourya Baranwal — Mechatronics Engineer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0B0F16;
+    --panel: #10141F;
+    --panel-2: #171D2C;
+    --border: #263149;
+    --grid-line: rgba(111, 211, 242, 0.07);
+    --grid-line-strong: rgba(111, 211, 242, 0.14);
+    --cyan: #6FD3F2;
+    --orange: #FF6A39;
+    --text: #EDEFF4;
+    --text-muted: #8C97AC;
+    --text-faint: #5B6478;
+    --radius: 10px;
+    --display: 'Space Grotesk', sans-serif;
+    --body: 'Inter', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a{ color: inherit; text-decoration: none; }
+  img, svg{ display:block; max-width:100%; }
+  section{ position: relative; }
+  .wrap{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+  ::selection{ background: var(--orange); color: #0B0F16; }
+  :focus-visible{
+    outline: 2px solid var(--cyan);
+    outline-offset: 3px;
+  }
+
+  .eyebrow{
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before{
+    content:"";
+    width: 22px;
+    height: 1px;
+    background: var(--cyan);
+    display:inline-block;
+  }
+
+  /* ---------- NAV ---------- */
+  header.nav{
+    position: fixed;
+    top:0; left:0; right:0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    background: rgba(11,15,22,0.72);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: 0.02em;
+  }
+  .brand-mark{
+    width: 30px; height: 30px;
+    border: 1.5px solid var(--cyan);
+    border-radius: 6px;
+    display:flex; align-items:center; justify-content:center;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--cyan);
+    transform: rotate(0deg);
+  }
+  nav.links{
+    display:flex;
+    gap: 28px;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+  nav.links a{ transition: color .2s ease; }
+  nav.links a:hover{ color: var(--text); }
+  .btn{
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    padding: 9px 18px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    transition: border-color .2s ease, transform .2s ease, background .2s ease;
+    display:inline-block;
+    white-space: nowrap;
+  }
+  .btn-primary{
+    background: var(--orange);
+    color: #0B0F16;
+    border-color: var(--orange);
+    font-weight: 600;
+  }
+  .btn-primary:hover{ transform: translateY(-1px); }
+  .btn-ghost:hover{ border-color: var(--cyan); color: var(--cyan); }
+  .nav-cta{ display:flex; align-items:center; gap: 16px; }
+  .nav-links-mobile{ display:none; }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    padding: 168px 0 96px;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(var(--grid-line-strong) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line-strong) 1px, transparent 1px);
+    background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px;
+    background-position: -1px -1px;
+    overflow: hidden;
+  }
+  .hero-grid{
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+    gap: 40px;
+    align-items: center;
+  }
+  .hero h1{
+    font-family: var(--display);
+    font-size: clamp(38px, 5vw, 64px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin: 18px 0 22px;
+    font-weight: 600;
+  }
+  .hero h1 .accent{ color: var(--orange); }
+  .hero p.sub{
+    font-size: 17px;
+    color: var(--text-muted);
+    max-width: 480px;
+    margin: 0 0 34px;
+  }
+  .hero-actions{ display:flex; gap: 14px; flex-wrap: wrap; }
+
+  .rig{
+    position: relative;
+    aspect-ratio: 1 / 1;
+    max-width: 460px;
+    margin: 0 auto;
+  }
+  .rig svg{ width: 100%; height: 100%; }
+
+  .rig .car{
+    transform-origin: 240px 250px;
+    animation: carDrive 7s ease-in-out infinite;
+  }
+  .rig .wheel{
+    animation: wheelSpin 0.6s linear infinite;
+  }
+  .rig .wheel-front{ transform-origin: 156px 278px; }
+  .rig .wheel-rear{ transform-origin: 320px 278px; }
+
+  @keyframes carDrive{
+    0%   { transform: translate(-60px, 0)     scaleX(1); }
+    45%  { transform: translate(60px, -5px)   scaleX(1); }
+    50%  { transform: translate(60px, -5px)   scaleX(-1); }
+    95%  { transform: translate(-60px, -5px)  scaleX(-1); }
+    100% { transform: translate(-60px, 0)     scaleX(1); }
+  }
+  @keyframes wheelSpin{
+    from{ transform: rotate(0deg); }
+    to{ transform: rotate(360deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .rig .car, .rig .wheel{ animation: none !important; }
+  }
+
+  .titleblock{
+    margin-top: 64px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .titleblock div{
+    padding: 14px 4px;
+    border-right: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+  }
+  .titleblock div:last-child{ border-right: none; }
+  .titleblock span{ display:block; color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+
+  /* ---------- SECTION HEADS ---------- */
+  .section-head{ margin-bottom: 48px; max-width: 640px; }
+  .section-head h2{
+    font-family: var(--display);
+    font-size: clamp(28px, 3.4vw, 40px);
+    margin: 14px 0 12px;
+    font-weight: 600;
+  }
+  .section-head p{ color: var(--text-muted); font-size: 15.5px; }
+
+  .reveal{ opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.in{ opacity: 1; transform: translateY(0); }
+
+  /* ---------- ABOUT ---------- */
+  .about{ padding: 120px 0; border-top: 1px solid var(--border); }
+  .about-grid{
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 64px;
+  }
+  .about p{ color: var(--text-muted); font-size: 16px; margin-bottom: 16px; }
+  .about p strong{ color: var(--text); font-weight: 600; }
+  .facts{ font-family: var(--mono); font-size: 13px; }
+  .facts dt{ color: var(--text-faint); margin-top: 18px; letter-spacing: .05em; text-transform: uppercase; font-size: 11px; }
+  .facts dt:first-child{ margin-top: 0; }
+  .facts dd{ margin: 6px 0 0; color: var(--text); font-size: 14.5px; }
+
+  /* ---------- CAPABILITIES ---------- */
+  .capabilities{ padding: 0 0 120px; }
+  .cap-table{
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .cap-row{
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+  .cap-row:last-child{ border-bottom: none; }
+  .cap-label{
+    padding: 22px 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+  }
+  .cap-chips{
+    padding: 18px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    background: var(--panel-2);
+  }
+  .chip{
+    font-family: var(--mono);
+    font-size: 12.5px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text-muted);
+  }
+
+  /* ---------- PROJECTS ---------- */
+  .projects{ padding: 0 0 120px; }
+  .proj-grid{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  .card{
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--panel);
+    overflow: hidden;
+    transition: border-color .25s ease, transform .25s ease;
+  }
+  .card:hover{ border-color: var(--cyan); transform: translateY(-3px); }
+  .card-art{
+    height: 180px;
+    position: relative;
+    background: var(--panel-2);
+    border-bottom: 1px solid var(--border);
+  }
+  .card-art svg{ position:absolute; inset:0; width:100%; height:100%; }
+  .rev-tag{
+    position:absolute; top: 14px; left: 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .06em;
+    padding: 4px 9px;
+    background: rgba(11,15,22,0.8);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--orange);
+    z-index: 2;
+  }
+  .card-body{ padding: 22px 24px 26px; }
+  .card-body h3{
+    font-family: var(--display);
+    font-size: 19px;
+    margin: 0 0 8px;
+    font-weight: 600;
+  }
+  .card-body p{ color: var(--text-muted); font-size: 14px; margin: 0 0 16px; }
+  .card-tags{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 16px; }
+  .card-tags span{
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .card-link{
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--cyan);
+    display:inline-flex;
+    align-items:center;
+    gap: 6px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+  .card-link .arrow{ transition: transform .2s ease; }
+  .card:hover .card-link .arrow{ transform: translateX(3px); }
+  .card.open .card-link .arrow{ transform: rotate(90deg); }
+  .card.open:hover .card-link .arrow{ transform: rotate(90deg) translateX(3px); }
+
+  .card-details{
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .45s ease;
+  }
+  .card.open .card-details{ max-height: 1400px; }
+  .detail-inner{ padding: 4px 24px 26px; border-top: 1px solid var(--border); margin-top: 18px; }
+  .detail-block{ padding-top: 18px; }
+  .detail-block h4{
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin: 0 0 8px;
+  }
+  .detail-block p{
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  /* ---------- CONTACT ---------- */
+  .contact{ padding: 0 0 90px; }
+  .contact-block{
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 56px;
+    background: var(--panel);
+    text-align: center;
+  }
+  .contact-block h2{
+    font-family: var(--display);
+    font-size: clamp(28px, 4vw, 44px);
+    margin: 16px 0 22px;
+    font-weight: 600;
+  }
+  .contact-block .btn-primary{ padding: 13px 28px; font-size: 14px; }
+
+  .field-grid{
+    margin-top: 48px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--border);
+  }
+  .field-grid div{
+    padding: 18px 10px 0;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    text-align: left;
+  }
+  .field-grid span{ display:block; color: var(--text-muted); font-size: 13.5px; margin-top: 6px; }
+  .social-links{ display:flex !important; gap: 14px; margin-top: 8px !important; }
+  .social-links a{
+    color: var(--text-muted);
+    transition: color .2s ease, transform .2s ease;
+    display: inline-flex;
+  }
+  .social-links a:hover{ color: var(--cyan); transform: translateY(-2px); }
+
+  footer{
+    border-top: 1px solid var(--border);
+    padding: 28px 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    display:flex;
+    justify-content: space-between;
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 700px){
+    .hero-grid{ grid-template-columns: 1fr; }
+    .rig{ max-width: 320px; margin: 10px auto 0; order: initial; }
+    .about-grid{ grid-template-columns: 1fr; gap: 40px; }
+    .cap-row{ grid-template-columns: 1fr; }
+    .cap-label{ border-right:none; border-bottom: 1px solid var(--border); }
+    .proj-grid{ grid-template-columns: 1fr; }
+    .field-grid{ grid-template-columns: repeat(2, 1fr); row-gap: 20px; }
+    nav.links{ display:none; }
+    .titleblock{ grid-template-columns: repeat(2,1fr); }
+    .titleblock div:nth-child(2){ border-right:none; }
+    .contact-block{ padding: 36px 22px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      <span class="brand-mark">SB</span>
+      SHOURYA BARANWAL
+    </div>
+    <nav class="links">
+      <a href="#work">Work</a>
+      <a href="#capabilities">Capabilities</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-ghost" href="Shourya Baranwal.pdf" download="Shourya Baranwal.pdf" target="_blank" rel="noopener">Resume ↓</a>
+      <a class="btn btn-primary" href="#contact">Let's Connect!</a>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">Mechanical Engineer</p>
+      <h1>Designing projects<br>that <span class="accent">move, adapt,</span><br>and innovate.</h1>
+      <p class="sub">I'm a third year mechanical engineering student, who yearns to learn more about the complex systems around us that seem simple at first. Mistakes are how I learn, and persistence is key to my unwaivering drive.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#work">View projects</a>
+        <a class="btn btn-ghost" href="#contact">Get in touch</a>
+      </div>
+    </div>
+
+    <div class="rig" aria-hidden="true">
+      <svg viewBox="0 0 460 460">
+        <line x1="30" y1="308" x2="430" y2="308" stroke="#26314A" stroke-width="1.5"/>
+
+        <g class="car">
+          <ellipse cx="240" cy="295" rx="150" ry="9" fill="#000" opacity="0.32"/>
+
+          <g class="wheel wheel-rear">
+            <circle cx="320" cy="278" r="26" fill="#0B0F16" stroke="#26314A" stroke-width="2"/>
+            <circle cx="320" cy="278" r="9" fill="none" stroke="#6FD3F2" stroke-width="2"/>
+            <line x1="320" y1="256" x2="320" y2="300" stroke="#6FD3F2" stroke-width="2"/>
+            <line x1="298" y1="278" x2="342" y2="278" stroke="#6FD3F2" stroke-width="2"/>
+          </g>
+          <g class="wheel wheel-front">
+            <circle cx="156" cy="278" r="26" fill="#0B0F16" stroke="#26314A" stroke-width="2"/>
+            <circle cx="156" cy="278" r="9" fill="none" stroke="#6FD3F2" stroke-width="2"/>
+            <line x1="156" y1="256" x2="156" y2="300" stroke="#6FD3F2" stroke-width="2"/>
+            <line x1="134" y1="278" x2="178" y2="278" stroke="#6FD3F2" stroke-width="2"/>
+          </g>
+
+          <path d="M90,258 C96,236 114,214 138,200 C172,178 208,167 240,164 C272,167 304,176 330,190 C356,204 376,222 388,244 C392,254 388,264 378,270 L360,272 C356,266 348,262 338,262 L142,262 C132,262 124,266 120,272 L102,270 C92,266 88,262 90,258 Z"
+                fill="#D7DCE4" stroke="#8A94A6" stroke-width="1.5"/>
+
+          <path d="M110,262 L370,262 C374,266 374,272 370,276 L110,276 C106,272 106,266 110,262 Z"
+                fill="#B9C1CE" stroke="#8A94A6" stroke-width="1"/>
+          <rect x="110" y="270" width="260" height="4" rx="2" fill="#6FD3F2"/>
+
+          <path d="M185,170 C202,160 238,159 262,165 C282,170 296,180 302,192 L182,192 C180,184 180,176 185,170 Z"
+                fill="#171D2C" stroke="#6FD3F2" stroke-width="1.5"/>
+          <line x1="195" y1="174" x2="240" y2="168" stroke="rgba(111,211,242,0.5)" stroke-width="2"/>
+
+          <circle cx="96" cy="248" r="4" fill="#FF6A39"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="titleblock">
+      <div>VIBECODED BY <span>SHOURYA BARANWAL</span></div>
+      <div>PERSISTENCE <span>100 of 100</span></div>
+      <div>MATERIAL <span>I <3 Carbon Fiber</span></div>
+      <div>STATUS <span>Open for internship</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="about reveal" id="about">
+  <div class="wrap about-grid">
+    <div>
+      <p class="eyebrow">About</p>
+      <h2 style="font-family: var(--display); font-size: 32px; margin: 14px 0 22px;">Background, in brief.</h2>
+      <p>I'm a mechanical engineering student who gravitates toward the automotive and mechatronics side of the field — where drivetrain, sensors, and control logic all have to work together. I'm communicative and collaborative by nature, and I bring a steady, positive attitude to team environments, especially when a project hits the inevitable snag. What drives me is genuine curiosity: I want to understand a system well enough to improve it, and I care about the people I'm building it with as much as the build itself. <strong>I studied Mechanical Engineering at the University of Calgary, graduating in 2029.</strong> Since then I've worked across machine design, controls, and manufacturing.</p>
+      <p>I like projects that force a full loop: sketch, simulate, machine, assemble, debug the firmware at 1am, and get it working on the bench. Most of what's below started as a napkin drawing.</p>
+    </div>
+    <dl class="facts">
+      <dt>Location</dt>
+      <dd>Calgary, AB — open to relocation</dd>
+      <dt>Education</dt>
+      <dd>B.Sc. Mechanical Engineering, University of Calgary, 2029</dd>
+      <dt>Focus areas</dt>
+      <dd>Robotics, Mechanism Design, Automotives</dd>
+      <dt>Currently</dt>
+      <dd>Engineering Manager at University of Calgary Solar Car Team</dd>
+    </dl>
+  </div>
+</section>
+
+<section class="capabilities reveal" id="capabilities">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Capabilities</p>
+      <h2>What I build with.</h2>
+      <p>A working set of tools across design, fabrication, and control:</p>
+    </div>
+    <div class="cap-table">
+      <div class="cap-row">
+        <div class="cap-label">Design &amp; CAD</div>
+        <div class="cap-chips">
+          <span class="chip">SolidWorks</span><span class="chip">Onshape</span><span class="chip">Fusion360</span><span class="chip">ANSYS Simulation</span>
+        </div>
+      </div>
+      <div class="cap-row">
+        <div class="cap-label">Fabrication</div>
+        <div class="cap-chips">
+          <span class="chip">Lathe</span><span class="chip">3D Printing (PLA)</span><span class="chip">Carbon Fiber Infusions</span><span class="chip">Mill</span><span class="chip">Waterjet</span>
+        </div>
+      </div>
+      <div class="cap-row">
+        <div class="cap-label">Controls &amp; Electronics</div>
+        <div class="cap-chips">
+          <span class="chip">Embedded C/C++</span><span class="chip">Sensors &amp; Actuators</span><span class="chip">PCB Design Basics</span><span class="chip">Arduino</span>
+        </div>
+      </div>
+      <div class="cap-row">
+        <div class="cap-label">Software</div>
+        <div class="cap-chips">
+          <span class="chip">Python</span><span class="chip">MATLAB</span><span class="chip">Simulink</span><span class="chip">Altium</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="projects reveal" id="work">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Selected Work</p>
+      <h2>Projects, by revision.</h2>
+      <p>My builds include but are not limited to the following:</p>
+    </div>
+
+    <div class="proj-grid">
+
+      <article class="card">
+        <div class="card-art">
+          <span class="rev-tag">REV A</span>
+          <video src="Door.mp4" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;object-position: center 42%;display:block;"></video>
+        </div>
+        <div class="card-body">
+          <h3>Door Hinge - University of Calgary Solar Car Team</h3>
+          <p>A pop-out and up door opening design complimenting the aeroshell of the 6th gen solar car Schulich Helios.</p>
+          <div class="card-tags"><span>GD&amp;T</span><span>ANSYS FEA</span><span>SolidWorks</span><span>Collaboration</span></div>
+          <button class="card-link card-toggle" type="button" aria-expanded="false">
+            <span class="toggle-text">View case study</span> <span class="arrow">→</span>
+          </button>
+          <div class="card-details">
+            <div class="detail-inner">
+              <div class="detail-block">
+                <h4>Purpose</h4>
+                <p>This was the first mechanical design project I took upon myselft to complete. The purpose of this type of door hinge relies behind the complicated shape of the side skirts on our car - see more details in the breakdown below.</p>
+              </div>
+              <div class="detail-block">
+                <h4>Design</h4>
+                <p>The hinge was loaded in the worst case scenario, where the expected force of 20 lbf for the door was applied at the furthest point from the hinge. The beauty of this design is its repeatability, and attention to deformation under the load of the door- see the full write-up for more details.</p>
+              </div>
+              <div class="detail-block">
+                <h4>Building it in real life</h4>
+                <p>A combination of off the shelf parts, waterjet, and recycling previous parts was used for this design process to make these hinges work- see the deep dive below to see exactly how.</p>
+              </div>
+              <div class="detail-block">
+                <h4>What I learned</h4>
+                <p>This was my first project in solar car, and there were many things I did not account for during this design process. A lack of design reviews prohibited an efficient design from being made, as collaboration increases creavity and innovation of every design. Some issues for this design include mounting arms from the door to the hinge, and a loose, almost wobbly hinge. I am working on fixing this currently and an increased importance in design reviews will surely help me achieve a better design.</p>
+              </div>
+              <a class="card-link" href="door-hinge-deep-dive.html" style="display:inline-flex;margin-top:14px;">
+                <span>Full build breakdown &amp; issues log</span> <span class="arrow">→</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-art">
+          <span class="rev-tag">REV B</span>
+          <video src="delivery-robot-thumb.mp4" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;object-position: center 42%;display:block;"></video>
+        </div>
+        <div class="card-body">
+          <h3>Sensor-Feedback Delivery Robot</h3>
+          <p>An autonomous delivery robot that navigates an obstacle course, picks up a 3D-printed payload, and drops it at a delivery zone — repeating as many loops as possible in a 10-minute window.</p>
+          <div class="card-tags"><span>Onshape</span><span>Embedded</span><span>3D Printing</span></div>
+          <button class="card-link card-toggle" type="button" aria-expanded="false">
+            <span class="toggle-text">View case study</span> <span class="arrow">→</span>
+          </button>
+          <div class="card-details">
+            <div class="detail-inner">
+              <div class="detail-block">
+                <h4>Purpose</h4>
+                <p>The challenge was to build a robot that could run a course of obstacles, pick up a 3D-printed payload, and deliver it to a marked delivery area — then repeat that cycle as many times as possible inside a 10-minute window. Speed, reliability, and repeatability mattered as much as getting the pickup and drop-off right.</p>
+              </div>
+              <div class="detail-block">
+                <h4>Design</h4>
+                <p>Navigation relied on two HC-SR04 ultrasonic sensors for wall following through the course, paired with an IR emitter/receiver setup for line following. I did the overall CAD model for the robot, including the full assembly of every component I could source online — chassis, sensor mounts, payload gripper, and drivetrain — so everything fit and moved together before it was ever built.</p>
+              </div>
+              <div class="detail-block">
+                <h4>Building it in real life</h4>
+                <p>Getting the motors to work together reliably took a lot of iteration — see the full write-up for the specific issues we ran into and how we solved each one.</p>
+              </div>
+              <div class="detail-block">
+                <h4>What I learned</h4>
+                <p>Balancing two different sensor feedback loops (wall-following distance control and line-following steering) taught me a lot about tuning control logic for competing priorities, and about how much fabrication tolerance matters when a robot has to repeat the same run over and over under a time limit.</p>
+              </div>
+              <a class="card-link" href="delivery-robot-deep-dive.html" style="display:inline-flex;margin-top:14px;">
+                <span>Full build breakdown &amp; issues log</span> <span class="arrow">→</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </article>
+      
+      <article class="card">
+        <div class="card-art">
+          <span class="rev-tag">REV C</span>
+          <video src="LinkedInVid.mp4" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;object-position: center 42%;display:block;"></video>
+        </div>
+        <div class="card-body">
+          <h3>Aston Martin One-77 — Full Surface Model</h3>
+          <p>A from-scratch SolidWorks rebuild of the Aston Martin One-77, complete with a custom steering system that actually turns the wheels.</p>
+          <div class="card-tags"><span>SolidWorks</span><span>Surface Modelling</span><span>Tutorial-Guided</span></div>
+          <button class="card-link card-toggle" type="button" aria-expanded="false">
+            <span class="toggle-text">View case study</span> <span class="arrow">→</span>
+          </button>
+          <div class="card-details">
+            <div class="detail-inner">
+              <div class="detail-block">
+                <h4>Purpose</h4>
+                <p>I wanted to push my SolidWorks skills up a steep learning curve, so over two months I set out to rebuild the Aston Martin One-77 entirely from scratch. I followed a guided tutorial from <a href="https://www.linkedin.com/company/learnsolidworks/" target="_blank" rel="noopener">LearnSOLIDWORKS.com</a>, led by <a href="https://www.linkedin.com/in/zuyderduyn/" target="_blank" rel="noopener">Jan-Willem Zuyderduyn</a>, rather than working from my own design — a deliberate choice to learn advanced surfacing technique before applying it to my own projects.</p>
+              </div>
+              <div class="detail-block">
+                <h4>Design</h4>
+                <p>The body relies heavily on 3D projected curves to raise the level of surface detail, and ruled surfaces to fill patches and add debossed details like the headlight backplates and door handles. I pushed past the tutorial's base scope by designing a custom steering system so the front wheels actually turn.</p>
+              </div>
+              <div class="detail-block">
+                <h4>Building it in real life</h4>
+                <p>This was a full digital build: assembling the tires, rims, and steering system into the rest of the modelled car, and using surface modelling throughout to capture the intricate character lines seen on modern automotive bodies.</p>
+              </div>
+              <div class="detail-block">
+                <h4>What I learned</h4>
+                <p>I couldn't rebuild this car from scratch without the tutorial yet — but that's not really the point. It gave me the fundamentals of surface modelling, which is exactly the barrier that was stopping me from starting my own personal projects with well-designed, complex components.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-art">
+          <span class="rev-tag">REV D</span>
+          <video src="Drawer.mp4" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;object-position: center 42%;display:block;"></video>
+        </div>
+        <div class="card-body">
+          <h3>Custom Drawer Tower</h3>
+          <p>A 3D printed drawer tower, designed using SolidWorks, fitted with 15 small drawers, 1 medium, and 1 large drawer.</p>
+          <div class="card-tags"><span>SolidWorks</span><span>For Fun</span><span>3D Printing</span></div>
+          <button class="card-link card-toggle" type="button" aria-expanded="false">
+            <span class="toggle-text">View case study</span> <span class="arrow">→</span>
+          </button>
+          <div class="card-details">
+            <div class="detail-inner">
+              <div class="detail-block">
+                <h4>Purpose</h4>
+                <p>Starting on my arduino kit, I noticed how messy it would get to play with different sensors, switches, and resistors. This motivated me to build my own drawer tower, where I could control exactly how many drawers I needed, and how much desk space it would occupy.</p>
+              </div>
+              <div class="detail-block">
+                <h4>Design</h4>
+                <p>I noticed the long print time when I first created the design. This was due to an overly high infill density, and an inefficient structure for space optimization. I used a 5% infill density and removed material between supporting shelves to reduce 2 hours of print time! I also added pokeballs as door handles for fun!</p>
+              </div>
+              <div class="detail-block">
+                <h4>Building it in real life</h4>
+                <p>The build was not hard to assemble because of it's simplicity but more importantly, my attention to tolerance. The drawers had a profile that was 0.3 mm lower than the hold profiles in the hull of the drawer tower. This ensured a smooth fit for all my drawers as shown in the video.</p>
+              </div>
+              <div class="detail-block">
+                <h4>What I learned</h4>
+                <p>I use the 0.3 mm tolerance for all sliding parts in my prints now as they fit precisely. This project taught me to minimize print times by decreasing infill density, and removing uneccesary material to ensure cost and time efficiency. P.S. Mom liked it so much I have to print one for her now :).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section class="contact reveal" id="contact">
+  <div class="wrap">
+    <div class="contact-block">
+      <p class="eyebrow" style="justify-content:center;">Contact</p>
+      <h2>Let's build something.</h2>
+      <p style="color: var(--text-muted); max-width: 480px; margin: 0 auto 8px;">Open to internships Winter 2027, Fall 2027. Building something cool? Let's connect I would love to know what you are working on!</p>
+      <a class="btn btn-primary" href="mailto:baranwalshourya@gmail.com">Email me</a>
+
+      <div class="field-grid">
+        <div>NAME<span>Shourya Baranwal</span></div>
+        <div>EMAIL<span>baranwalshourya@gmail.com</span></div>
+        <div>LOCATION<span>Calgary, AB</span></div>
+        <div>LINKS
+          <span class="social-links">
+            <a href="https://github.com/notElephantOnMars" target="_blank" rel="noopener" aria-label="GitHub">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.57.1.78-.25.78-.55 0-.27-.01-1.16-.02-2.11-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.64 1.59.24 2.76.12 3.05.74.8 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.15 0 1.55-.01 2.8-.01 3.18 0 .3.2.66.79.55A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+            </a>
+            <a href="https://www.linkedin.com/in/shourya-baranwal/" target="_blank" rel="noopener" aria-label="LinkedIn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.15 1.45-2.15 2.94v5.67H9.35V9h3.41v1.56h.05c.47-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.12 20.45H3.56V9h3.56v11.45Z"/></svg>
+            </a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <span>© 2026 Shourya Baranwal</span>
+</footer>
+
+<script>
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => io.observe(el));
+
+  // Expandable project case studies
+  document.querySelectorAll('.card-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = btn.closest('.card');
+      const isOpen = card.classList.toggle('open');
+      btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      btn.querySelector('.toggle-text').textContent = isOpen ? 'Hide Project' : 'View Project';
+    });
+  });
+</script>
+
+</body>
+</html>
