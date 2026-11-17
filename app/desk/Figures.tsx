@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import * as THREE from "three";
+import { ModelFigure } from "./ModelFigure";
 import { DESK_TOP, SPOT } from "./placement";
 
 // Small stylised figurines lined up behind the hologram projector: Goku, Iron Man, a brass Hanuman idol, and Spider-Man.
@@ -217,7 +218,10 @@ export function Figures() {
   return (
     <group position={[0, DESK_TOP, z]} scale={0.85}>
       <group position={[-0.27, 0, 0.01]} rotation-y={0.35}>
-        <Goku />
+        {/* downloaded model; the hand-built one shows while it loads */}
+        <Suspense fallback={<Goku />}>
+          <ModelFigure file="goku.glb" height={0.125} />
+        </Suspense>
       </group>
       <group position={[-0.13, 0, 0]} rotation-y={0.18}>
         <IronMan />
