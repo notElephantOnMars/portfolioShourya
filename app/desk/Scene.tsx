@@ -3,10 +3,12 @@
 import { Environment, Lightformer } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Bloom, EffectComposer, SMAA, Vignette } from "@react-three/postprocessing";
+import { Suspense } from "react";
 import type { Project } from "../components/ProjectCard";
 import { CameraRig } from "./CameraRig";
 import { Figures } from "./Figures";
 import { Hologram } from "./Hologram";
+import { InspectStage } from "./InspectStage";
 import { Keyboard } from "./Keyboard";
 import { Monitor } from "./Monitor";
 import { Mouse } from "./Mouse";
@@ -21,9 +23,10 @@ export type SceneProps = {
   reducedMotion: boolean;
   onArrive: () => void;
   onSelect: (i: number) => void;
+  inspect: Project | null; // the project open in the inspect view (the desk is hidden meanwhile)
 };
 
-export default function Scene({ projects, index, zoomed, reducedMotion, onArrive, onSelect }: SceneProps) {
+export default function Scene({ projects, index, zoomed, reducedMotion, onArrive, onSelect, inspect }: SceneProps) {
   return (
     <Canvas
       shadows
@@ -39,14 +42,21 @@ export default function Scene({ projects, index, zoomed, reducedMotion, onArrive
         <Lightformer form="rect" intensity={0.4} color="#c8d4ff" position={[-2, 1.5, 2]} scale={[2, 2, 1]} />
       </Environment>
 
-      <Room />
-      <Monitor />
-      <PowerSupply />
-      <Figures />
-      <Keyboard reducedMotion={reducedMotion} />
-      <Mouse />
-      <Hologram projects={projects} index={index} onSelect={onSelect} />
-      <CameraRig zoomed={zoomed} reducedMotion={reducedMotion} onArrive={onArrive} />
+      <group visible={!inspect}>
+        <Room />
+        <Monitor />
+        <PowerSupply />
+        <Figures />
+        <Keyboard reducedMotion={reducedMotion} />
+        <Mouse />
+        <Hologram projects={projects} index={index} onSelect={onSelect} />
+      </group>
+      <CameraRig zoomed={zoomed} paused={!!inspect} reducedMotion={reducedMotion} onArrive={onArrive} />
+      {inspect?.model && (
+        <Suspense fallback={null}>
+          <InspectStage key={inspect.model.file} spec={inspect.model} reducedMotion={reducedMotion} />
+        </Suspense>
+      )}
 
       {/* multisampling inside the composer renders black in some browsers, so anti-aliasing comes from SMAA instead */}
       <EffectComposer multisampling={0}>

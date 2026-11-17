@@ -1,13 +1,16 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { asset } from "../asset";
 import type { Project } from "../components/ProjectCard";
 import { DESK_TOP, HOLO, SPOT } from "./placement";
 import { smoothstep, story } from "./story";
 import { CARD, projectCard } from "./textures";
+import { HoloModel } from "./HoloModel";
+import { modelUrl } from "./models";
 
 // The hologram projector in the middle of the desk. Idle, it shows a slowly turning emblem; as the camera zooms in
 // it powers up into a floating panel showing one project (its card, plus its video), which can be cycled and selected.
@@ -77,6 +80,9 @@ const beamMat = new THREE.ShaderMaterial({
   toneMapped: false,
 });
 
+// room for the spinning model: the card's right-hand area (where a video would play), in metres
+const MODEL_BOX: [number, number] = [(CARD.video.w / CARD.w) * HOLO.width * 0.9, (CARD.video.h / CARD.h) * HOLO.height * 1.1];
+
 export function Hologram({ projects, index, onSelect }: { projects: Project[]; index: number; onSelect: (i: number) => void }) {
   const [px, pz] = SPOT.projector;
   // project cards, drawn once the site's fonts have loaded so the canvas text uses them
@@ -135,10 +141,20 @@ export function Hologram({ projects, index, onSelect }: { projects: Project[]; i
     return () => void (document.body.style.cursor = "");
   }, [hover]);
 
+  // the project models: start loading them all once the hologram powers up, so switching projects is instant
+  const preloaded = useRef(false);
+  const power = useRef(0); // how bright the spinning model is (fades with power-up and glitches)
+  const project = projects[index];
+
   useFrame(({ clock }, dt) => {
     const t = clock.elapsedTime;
     const a = smoothstep(0.45, 1, story.p); // how far the hologram has powered up
     glitch.current = Math.max(0, glitch.current - dt * 2.6);
+    power.current = a * (1 - glitch.current * 0.7);
+    if (a > 0.05 && !preloaded.current) {
+      preloaded.current = true;
+      projects.forEach((p) => p.model && useGLTF.preload(modelUrl(p.model.file)));
+    }
 
     // panel unfolds: a thin line first, then full height
     const sx = smoothstep(0, 0.4, a),
@@ -154,8 +170,8 @@ export function Hologram({ projects, index, onSelect }: { projects: Project[]; i
     }
     cardMat.uniforms.map.value = cards[index] ?? null;
 
-    // video: play the current one while the panel is up
-    if (a > 0.3) {
+    // video (projects without a 3D model): play the current one while the panel is up
+    if (a > 0.3 && !projects[index].model) {
       const v = videoFor(index);
       videos.current.forEach((o, i) => i !== index && !o.el.paused && o.el.pause());
       if (v.el.paused) v.el.play().catch(() => {});
@@ -187,6 +203,7 @@ export function Hologram({ projects, index, onSelect }: { projects: Project[]; i
   const vx = ((v.x + v.w / 2) / CARD.w - 0.5) * HOLO.width;
   const vy = (0.5 - (v.y + v.h / 2) / CARD.h) * HOLO.height;
   const beamH = HOLO.center[1] - HOLO.height / 2 - DESK_TOP - 0.012;
+  const modelBox = MODEL_BOX;
 
   return (
     <group>
@@ -234,15 +251,23 @@ export function Hologram({ projects, index, onSelect }: { projects: Project[]; i
       <group ref={panel} position={HOLO.center}>
         <mesh
           material={cardMat}
-          onClick={(e) => (e.stopPropagation(), story.p > 0.95 && onSelect(index))}
-          onPointerOver={() => story.p > 0.95 && setHover(true)}
+          onClick={(e) => (e.stopPropagation(), story.p > 0.95 && !story.inspecting && onSelect(index))}
+          onPointerOver={() => story.p > 0.95 && !story.inspecting && setHover(true)}
           onPointerOut={() => setHover(false)}
         >
           <planeGeometry args={[HOLO.width, HOLO.height]} />
         </mesh>
-        <mesh material={videoMat} position={[vx, vy, 0.001]}>
+        <mesh material={videoMat} position={[vx, vy, 0.001]} visible={!project.model}>
           <planeGeometry args={[(v.w / CARD.w) * HOLO.width, (v.h / CARD.h) * HOLO.height]} />
         </mesh>
+        {/* the project's model, spinning in front of the right half of the card */}
+        {project.model && (
+          <group position={[vx, vy, 0.05]}>
+            <Suspense fallback={null}>
+              <HoloModel key={index} model={project.model} box={modelBox} opacity={() => power.current} />
+            </Suspense>
+          </group>
+        )}
       </group>
     </group>
   );

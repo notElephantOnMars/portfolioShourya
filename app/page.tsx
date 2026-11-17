@@ -131,8 +131,32 @@ export default function Home() {
         </div>
       </Reveal>
 
-      <footer className="wrap">
+      <footer className="wrap" style={{ flexWrap: "wrap", gap: 12 }}>
         <span>© 2026 Shourya Baranwal</span>
+        {/* figurine models on the desk; CC BY 4.0 ones are resized and recoloured */}
+        <span>
+          Desk figures:{" "}
+          <a href="https://sketchfab.com/3d-models/goku-super-saiyan-c2cff8a947c94ea49c7d345fd6893fa9" target="_blank" rel="noopener">
+            Goku
+          </a>{" "}
+          by Tigerar1 ·{" "}
+          <a href="https://sketchfab.com/3d-models/iron-man-with-no-rig-3972bc5d690147b98251b4753c85d111" target="_blank" rel="noopener">
+            Iron Man
+          </a>{" "}
+          by Darth_Ir0n ·{" "}
+          <a href="https://sketchfab.com/3d-models/spider-man-e7a0ffa3e3174634bdb1edc08ac0bd7c" target="_blank" rel="noopener">
+            Spider-Man
+          </a>{" "}
+          by CipherFilms ·{" "}
+          <a href="https://sketchfab.com/3d-models/hanumananjaneya-idol-1d75f15d1cba49738c1a13e9e2846cb0" target="_blank" rel="noopener">
+            Hanuman/Anjaneya Idol
+          </a>{" "}
+          by Addere Creations ·{" "}
+          <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">
+            CC BY 4.0
+          </a>
+          , modified
+        </span>
       </footer>
     </>
   );

@@ -11,13 +11,24 @@ import { easeInOutCubic, story } from "./story";
 const v = (a: [number, number, number]) => new THREE.Vector3(...a);
 const DURATION = 2.4;
 
-export function CameraRig({ zoomed, reducedMotion, onArrive }: { zoomed: boolean; reducedMotion: boolean; onArrive: () => void }) {
+export function CameraRig({
+  zoomed,
+  paused,
+  reducedMotion,
+  onArrive,
+}: {
+  zoomed: boolean;
+  paused: boolean; // the inspect view is driving the camera
+  reducedMotion: boolean;
+  onArrive: () => void;
+}) {
   const { camera, size } = useThree();
   const pointer = useRef(new THREE.Vector2());
   const arrived = useRef(false);
   const tmp = useRef({ pos: new THREE.Vector3(), look: new THREE.Vector3(), a: new THREE.Vector3(), b: new THREE.Vector3() }).current;
 
   useFrame((state, dt) => {
+    if (paused) return;
     const dir = zoomed ? 1 : -1;
     const step = Math.min(dt, 0.05) / (reducedMotion ? 0.25 : DURATION);
     story.p = THREE.MathUtils.clamp(story.p + dir * step, 0, 1);

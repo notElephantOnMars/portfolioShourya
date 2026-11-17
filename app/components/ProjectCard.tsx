@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { asset } from "../asset";
+import type { ProjectModel } from "../desk/modelSpec";
 
 export type Project = {
   rev: string;
@@ -11,6 +12,7 @@ export type Project = {
   tags: string[];
   details: { heading: string; body: React.ReactNode }[];
   deepDive?: string;
+  model?: ProjectModel;
 };
 
 // A project card whose case study expands in place (the .card.open styles in globals.css).

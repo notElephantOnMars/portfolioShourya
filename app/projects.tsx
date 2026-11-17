@@ -26,6 +26,49 @@ export const projects: Project[] = [
       },
     ],
     deepDive: "door-hinge-deep-dive.html",
+    model: {
+      file: "hinge.glb",
+      focus: ["SBR16UU", "New Door Hinge", "Rail", "ShaftSupport", "Mounting Arm", "Mounts"],
+      ghost: ["CarBody"],
+      hinge: true,
+      parts: [
+        {
+          match: ["Door"],
+          title: "Door",
+          body: "About 9.07 kg (20 lbf), estimated from the density of the already-built front hood. Helios's door shape rules out a horizontal hinge, so it slides out, then lifts 30°, rising about 35 in.",
+        },
+        {
+          match: ["SBR16UU"],
+          title: "Linear bearing",
+          body: "Slides along the supported rail so the door clears its frame before it lifts. The sliders' documented dynamic load rating of 372 N is well above the 90 N door load.",
+        },
+        {
+          match: ["Rail"],
+          title: "Supported rail",
+          body: "Off-the-shelf rail, sourced from Amazon to keep costs down, then cut to length on the makerspace's metal bandsaw.",
+        },
+        {
+          match: ["New Door Hinge"],
+          title: "Hinge plate",
+          body: "6061-T6 aluminium. In FEA with 90 N at the tip: 83.2 MPa peak stress against 241 MPa yield, a safety factor of 3.0, and 0.86 mm deflection with the centre support beam.",
+        },
+        {
+          match: ["ShaftSupport"],
+          title: "Shaft supports",
+          body: "The door's weight moved from two pins onto a shaft, carried by pillow-block supports chosen to match the slider block's hole pattern.",
+        },
+        {
+          match: ["Mounting Arm"],
+          title: "Mounting arms",
+          body: "Lengthened to stop the door colliding with the car (Issue 01). The longer arm amplified a wobble from the mount spacing (Issue 02), which I'm still fixing.",
+        },
+        {
+          match: ["Mounts"],
+          title: "Door mounts",
+          body: "Where the door meets the hinge. Uneven surface contact here (Issue 03) is being solved with modular mounting methods, now in testing.",
+        },
+      ],
+    },
   },
   {
     rev: "REV B",
@@ -53,6 +96,32 @@ export const projects: Project[] = [
       },
     ],
     deepDive: "delivery-robot-deep-dive.html",
+    model: {
+      file: "robot.glb",
+      upZ: true,
+      parts: [
+        {
+          match: ["Part_1"],
+          title: "T-shaped chassis",
+          body: "Chosen to fit all the actuators and sensors: open sides and front for sensors, an open rear for the lift, and an open top for wiring.",
+        },
+        {
+          match: ["MIUZEI_MS18"],
+          title: "Lift servos",
+          body: "The first stepper motor couldn't lift the payload (Issue 01), so two calibrated servos now lift it in sync, carrying it with ease on the 9 V battery.",
+        },
+        {
+          match: ["RaspBerryPi_Pico", "RPI_RP2040"],
+          title: "Controller",
+          body: "Runs both feedback loops: wall following with two HC-SR04 ultrasonic sensors and line following with an IR emitter/receiver.",
+        },
+        {
+          match: ["HalfBreadboard"],
+          title: "Breadboards",
+          body: "Wiring for the sensors and servos. A falling battery voltage made runs inconsistent (Issue 02); a fresh battery and on-site calibration fixed it.",
+        },
+      ],
+    },
   },
   {
     rev: "REV C",
@@ -60,6 +129,36 @@ export const projects: Project[] = [
     title: "Aston Martin One-77 — Full Surface Model",
     summary: "A from-scratch SolidWorks rebuild of the Aston Martin One-77, complete with a custom steering system that actually turns the wheels.",
     tags: ["SolidWorks", "Surface Modelling", "Tutorial-Guided"],
+    model: {
+      file: "aston.glb",
+      parts: [
+        {
+          match: ["Aston_Martin"],
+          title: "Body surfaces",
+          body: "Built with 3D projected curves to raise the surface detail, capturing the character lines of a modern car body.",
+        },
+        {
+          match: ["Lights"],
+          title: "Headlights",
+          body: "Ruled surfaces fill the patches and add debossed details like the headlight backplates.",
+        },
+        {
+          match: ["Door"],
+          title: "Door",
+          body: "Debossed details such as the door handles were added with ruled surfaces.",
+        },
+        {
+          match: ["Wheel27"],
+          title: "Steering",
+          body: "Beyond the tutorial: I designed a custom steering system so the front wheels actually turn.",
+        },
+        {
+          match: ["BrakeDIsc"],
+          title: "Wheels and brakes",
+          body: "Tyres, rims and brake discs assembled into the rest of the modelled car.",
+        },
+      ],
+    },
     details: [
       {
         heading: "Purpose",

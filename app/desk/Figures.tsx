@@ -213,24 +213,35 @@ function SpiderMan() {
   );
 }
 
+// polished brass for the Hanumanji idol (the scanned model's own texture is a painted finish)
+const BRASS = new THREE.MeshStandardMaterial({ color: "#a17c38", metalness: 1, roughness: 0.42 });
+
+// Downloaded figurine models; each hand-built one above shows while its model loads.
+// Credits (also on the page): Goku Super Saiyan by Tigerar1; Iron-man with no rig by Darth_Ir0n; Spider-Man by
+// CipherFilms; Hanuman/Anjaneya Idol by Addere Creations (CC BY 4.0, resized and recoloured).
 export function Figures() {
   const z = SPOT.figures;
   return (
     <group position={[0, DESK_TOP, z]} scale={0.85}>
       <group position={[-0.27, 0, 0.01]} rotation-y={0.35}>
-        {/* downloaded model; the hand-built one shows while it loads */}
         <Suspense fallback={<Goku />}>
           <ModelFigure file="goku.glb" height={0.125} />
         </Suspense>
       </group>
       <group position={[-0.13, 0, 0]} rotation-y={0.18}>
-        <IronMan />
+        <Suspense fallback={<IronMan />}>
+          <ModelFigure file="ironman.glb" height={0.13} />
+        </Suspense>
       </group>
       <group position={[0.0, 0, -0.03]}>
-        <Hanuman />
+        <Suspense fallback={<Hanuman />}>
+          <ModelFigure file="hanuman.glb" height={0.15} base={0.032} material={BRASS} />
+        </Suspense>
       </group>
       <group position={[0.14, 0, 0]} rotation-y={-0.2}>
-        <SpiderMan />
+        <Suspense fallback={<SpiderMan />}>
+          <ModelFigure file="spiderman.glb" height={0.125} />
+        </Suspense>
       </group>
     </group>
   );

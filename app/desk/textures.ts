@@ -120,14 +120,28 @@ export function projectCard(p: Project, i: number, n: number) {
       g.fillText(t, x + 14, y);
       x += w + 12;
     }
-    // video frame and call to action
+    // video frame (or, for a 3D model, just its corner marks) and call to action
     const v = CARD.video;
     g.strokeStyle = "rgba(127,227,255,0.6)";
     g.lineWidth = 2;
-    g.strokeRect(v.x - 8, v.y - 8, v.w + 16, v.h + 16);
+    if (p.model) {
+      const m = 24;
+      for (const [x, y, dx, dy] of [
+        [v.x - 8, v.y - 8, 1, 1],
+        [v.x + v.w + 8, v.y - 8, -1, 1],
+        [v.x - 8, v.y + v.h + 8, 1, -1],
+        [v.x + v.w + 8, v.y + v.h + 8, -1, -1],
+      ]) {
+        g.beginPath();
+        g.moveTo(x + dx * m, y);
+        g.lineTo(x, y);
+        g.lineTo(x, y + dy * m);
+        g.stroke();
+      }
+    } else g.strokeRect(v.x - 8, v.y - 8, v.w + 16, v.h + 16);
     g.fillStyle = cyan;
     g.font = `500 24px ${mono}`;
-    g.fillText("▸ SELECT TO OPEN CASE STUDY", 700, 680);
+    g.fillText(p.model ? "▸ SELECT TO INSPECT IN 3D" : "▸ SELECT TO OPEN CASE STUDY", 700, 680);
     g.fillStyle = "rgba(127,227,255,0.55)";
     g.font = `500 20px ${mono}`;
     g.fillText("◂ ▸  CYCLE PROJECTS", 700, 720);
