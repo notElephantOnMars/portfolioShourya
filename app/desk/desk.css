@@ -1,0 +1,305 @@
+/* The 3D workbench hero: a full-screen canvas with the intro message and hologram controls laid over it. */
+.desk-hero {
+  position: relative;
+  height: 100svh;
+  min-height: 560px;
+  background: #05070b;
+  overflow: hidden;
+}
+.desk-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* overlays fade and slide; hidden ones don't take clicks */
+.desk-intro,
+.desk-scroll,
+.desk-controls {
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.desk-intro:not(.is-on),
+.desk-scroll:not(.is-on),
+.desk-controls:not(.is-on) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.desk-intro {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  pointer-events: none;
+}
+.desk-intro:not(.is-on) {
+  transform: translateY(-10px);
+}
+.desk-intro h1 {
+  font-family: var(--display);
+  font-size: clamp(20px, 2.2vw, 28px);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: rgba(237, 239, 244, 0.42);
+  margin: 0;
+}
+/* the layer pinned over the monitor's screen (sized and placed by Monitor.tsx); everything inside scales with
+   the screen's width on the page via --screen-w */
+.desk-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  --u: calc(var(--screen-w, 600px) / 100);
+  transition: opacity 0.5s ease;
+}
+.desk-screen:not(.is-on) {
+  opacity: 0;
+  pointer-events: none;
+}
+.desk-screen-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 2.2);
+  padding-bottom: calc(var(--u) * 6);
+}
+.desk-power {
+  --c: 111, 211, 242;
+  width: max(44px, calc(var(--u) * 15));
+  height: max(44px, calc(var(--u) * 15));
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: rgb(var(--c));
+  background: radial-gradient(circle, rgba(var(--c), 0.1) 0%, rgba(var(--c), 0.03) 60%, transparent 72%);
+  border: 1px solid rgba(var(--c), 0.25);
+  cursor: pointer;
+  filter: drop-shadow(0 0 calc(var(--u) * 1.2) rgba(var(--c), 0.55));
+  animation: deskBreathe 3.4s ease-in-out infinite;
+  transition: transform 0.25s ease, border-color 0.25s ease, filter 0.25s ease;
+}
+.desk-power svg {
+  width: 46%;
+  height: 46%;
+}
+.desk-power:hover,
+.desk-power:focus-visible {
+  transform: scale(1.06);
+  border-color: rgba(var(--c), 0.7);
+  filter: drop-shadow(0 0 calc(var(--u) * 2.2) rgba(var(--c), 0.9));
+  animation: none;
+  outline: none;
+}
+@keyframes deskBreathe {
+  50% {
+    filter: drop-shadow(0 0 calc(var(--u) * 0.5) rgba(var(--c), 0.3));
+    opacity: 0.8;
+  }
+}
+/* one-line hint that appears while the power button is hovered or focused */
+.desk-hint {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: max(10px, calc(var(--u) * 1.9));
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: rgba(127, 227, 255, 0.8);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+.desk-power:hover + .desk-hint,
+.desk-power:focus-visible + .desk-hint {
+  opacity: 1;
+  transform: none;
+}
+/* resume and contact: same colour and line, much quieter than the power button */
+.desk-screen-links {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--u) * 5);
+  display: flex;
+  justify-content: center;
+  gap: max(6px, calc(var(--u) * 2.5));
+}
+.desk-link {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 1);
+  font-family: var(--mono);
+  font-size: max(10px, calc(var(--u) * 1.85));
+  letter-spacing: 0.04em;
+  color: rgba(127, 227, 255, 0.5);
+  border: 1px solid rgba(127, 227, 255, 0.16);
+  border-radius: 999px;
+  white-space: nowrap;
+  padding: max(4px, calc(var(--u) * 0.8)) max(8px, calc(var(--u) * 2));
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.desk-link svg {
+  width: 1.15em;
+  height: 1.15em;
+}
+.desk-link:hover,
+.desk-link:focus-visible {
+  color: rgb(127, 227, 255);
+  border-color: rgba(127, 227, 255, 0.5);
+  background: rgba(127, 227, 255, 0.06);
+  outline: none;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.desk-scroll {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: rgba(91, 100, 120, 0.7);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.desk-scroll:hover {
+  color: var(--text-muted);
+}
+
+/* hologram controls */
+.desk-back {
+  position: absolute;
+  top: 24px;
+  left: max(32px, calc((100vw - 1180px) / 2 + 32px));
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-muted);
+  background: rgba(11, 15, 22, 0.7);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.desk-back:hover {
+  color: var(--cyan);
+  border-color: var(--cyan);
+}
+kbd {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text-faint);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0 5px;
+}
+.desk-bar {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  width: min(720px, calc(100vw - 32px));
+  background: rgba(11, 15, 22, 0.78);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.desk-controls:not(.is-on) .desk-bar {
+  transform: translate(-50%, 16px);
+}
+.desk-arrow {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: var(--cyan);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.desk-arrow:hover {
+  border-color: var(--cyan);
+  background: rgba(111, 211, 242, 0.08);
+}
+.desk-now {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.desk-count {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--cyan);
+}
+.desk-title {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.desk-open {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .desk-intro {
+    top: 40px;
+  }
+  .desk-back {
+    top: 16px;
+    left: 16px;
+  }
+  .desk-bar {
+    flex-wrap: wrap;
+    bottom: 16px;
+  }
+  .desk-now {
+    order: -1;
+    flex-basis: 100%;
+    margin-bottom: 4px;
+  }
+  .desk-arrow {
+    flex: 1;
+  }
+  .desk-open {
+    flex: 2;
+    justify-content: center;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-power {
+    animation: none;
+  }
+}

@@ -17,9 +17,9 @@
   --text-muted: #8C97AC;
   --text-faint: #5B6478;
   --radius: 10px;
-  --display: var(--font-space-grotesk), sans-serif;
-  --body: var(--font-inter), sans-serif;
-  --mono: var(--font-plex-mono), monospace;
+  --display: var(--font-instrument), sans-serif;
+  --body: var(--font-instrument), sans-serif;
+  --mono: var(--font-mono-face), monospace;
 }
 
 *{ box-sizing: border-box; }

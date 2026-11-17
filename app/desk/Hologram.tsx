@@ -1,0 +1,249 @@
+"use client";
+
+import { useFrame } from "@react-three/fiber";
+import { useEffect, useRef, useState } from "react";
+import * as THREE from "three";
+import { asset } from "../asset";
+import type { Project } from "../components/ProjectCard";
+import { DESK_TOP, HOLO, SPOT } from "./placement";
+import { smoothstep, story } from "./story";
+import { CARD, projectCard } from "./textures";
+
+// The hologram projector in the middle of the desk. Idle, it shows a slowly turning emblem; as the camera zooms in
+// it powers up into a floating panel showing one project (its card, plus its video), which can be cycled and selected.
+
+const holoVertex = "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }";
+const holoFragment = `
+  varying vec2 vUv;
+  uniform sampler2D map; uniform float time, opacity, glitch, tintMix;
+  uniform vec2 uvScale, uvOffset;
+  float hash(float n){ return fract(sin(n)*43758.5453); }
+  void main(){
+    vec2 uv = vUv;
+    // glitch: shove random horizontal bands sideways while switching projects
+    float band = floor(uv.y*28.0 + floor(time*24.0)*7.0);
+    uv.x += glitch * step(0.6, hash(band)) * (hash(band+1.0)-0.5) * 0.12;
+    vec4 c = texture2D(map, uv*uvScale + uvOffset);
+    float lum = dot(c.rgb, vec3(0.3,0.59,0.11));
+    vec3 col = mix(c.rgb, vec3(0.45,0.88,1.0)*lum*1.5, tintMix);
+    float scan = 0.88 + 0.12*sin(vUv.y*620.0 - time*6.0);
+    float flicker = 0.96 + 0.04*sin(time*41.0) * sin(time*7.0);
+    float edge = smoothstep(0.0,0.012,vUv.x)*smoothstep(0.0,0.012,1.0-vUv.x)*smoothstep(0.0,0.02,vUv.y)*smoothstep(0.0,0.02,1.0-vUv.y);
+    gl_FragColor = vec4(col*scan*1.08, c.a*opacity*flicker*edge*(1.0-glitch*0.35));
+    #include <colorspace_fragment>
+  }
+`;
+
+function holoMaterial(tintMix: number) {
+  return new THREE.ShaderMaterial({
+    vertexShader: holoVertex,
+    fragmentShader: holoFragment,
+    uniforms: {
+      map: { value: null },
+      time: { value: 0 },
+      opacity: { value: 0 },
+      glitch: { value: 0 },
+      tintMix: { value: tintMix },
+      uvScale: { value: new THREE.Vector2(1, 1) },
+      uvOffset: { value: new THREE.Vector2(0, 0) },
+    },
+    transparent: true,
+    depthWrite: false,
+    toneMapped: false,
+  });
+}
+
+// the light cone from the projector up to the panel
+const beamFragment = `
+  varying vec2 vUv; uniform float time, opacity;
+  void main(){
+    float fade = pow(1.0 - vUv.y, 1.4) * 0.8 + 0.2;
+    float lines = 0.6 + 0.4*sin(vUv.x*80.0 + time*2.0) * sin(vUv.y*30.0 - time*5.0);
+    gl_FragColor = vec4(vec3(0.35,0.85,1.0)*1.6, opacity*fade*lines*0.22);
+  }
+`;
+
+// One hologram per page, so its materials live here; useFrame updates their uniforms every frame.
+const cardMat = holoMaterial(0);
+const videoMat = holoMaterial(0.35);
+const beamMat = new THREE.ShaderMaterial({
+  vertexShader: holoVertex,
+  fragmentShader: beamFragment,
+  uniforms: { time: { value: 0 }, opacity: { value: 0 } },
+  transparent: true,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending,
+  side: THREE.DoubleSide,
+  toneMapped: false,
+});
+
+export function Hologram({ projects, index, onSelect }: { projects: Project[]; index: number; onSelect: (i: number) => void }) {
+  const [px, pz] = SPOT.projector;
+  // project cards, drawn once the site's fonts have loaded so the canvas text uses them
+  const [cards, setCards] = useState<THREE.Texture[]>([]);
+  useEffect(() => {
+    let made: THREE.Texture[] = [];
+    let live = true;
+    document.fonts.ready.then(() => {
+      if (!live) return;
+      made = projects.map((p, i) => projectCard(p, i, projects.length));
+      setCards(made);
+    });
+    return () => {
+      live = false;
+      made.forEach((t) => t.dispose());
+    };
+  }, [projects]);
+
+  // one <video> per project, made on first use; only the one on screen plays
+  const videos = useRef<Map<number, { el: HTMLVideoElement; tex: THREE.VideoTexture }>>(new Map());
+  useEffect(() => {
+    const all = videos.current;
+    return () => {
+      all.forEach(({ el, tex }) => (el.pause(), el.removeAttribute("src"), el.load(), tex.dispose()));
+      all.clear();
+    };
+  }, []);
+  const videoFor = (i: number) => {
+    let v = videos.current.get(i);
+    if (!v) {
+      const el = document.createElement("video");
+      Object.assign(el, { src: asset(projects[i].video), muted: true, loop: true, playsInline: true, crossOrigin: "anonymous", preload: "auto" });
+      const tex = new THREE.VideoTexture(el);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      v = { el, tex };
+      videos.current.set(i, v);
+    }
+    return v;
+  };
+
+  // switching projects: glitch the panel for a moment
+  const glitch = useRef(0);
+  const shown = useRef(index);
+  useEffect(() => {
+    if (shown.current !== index) glitch.current = 1;
+    shown.current = index;
+  }, [index]);
+
+  const panel = useRef<THREE.Group>(null);
+  const beam = useRef<THREE.Group>(null);
+  const emblem = useRef<THREE.Group>(null);
+  const ring = useRef<THREE.MeshBasicMaterial>(null);
+  const [hover, setHover] = useState(false);
+  useEffect(() => {
+    document.body.style.cursor = hover ? "pointer" : "";
+    return () => void (document.body.style.cursor = "");
+  }, [hover]);
+
+  useFrame(({ clock }, dt) => {
+    const t = clock.elapsedTime;
+    const a = smoothstep(0.45, 1, story.p); // how far the hologram has powered up
+    glitch.current = Math.max(0, glitch.current - dt * 2.6);
+
+    // panel unfolds: a thin line first, then full height
+    const sx = smoothstep(0, 0.4, a),
+      sy = Math.max(0.004, smoothstep(0.35, 1, a));
+    panel.current!.scale.set(sx, sy, 1);
+    panel.current!.visible = a > 0.001;
+    panel.current!.position.y = HOLO.center[1] + Math.sin(t * 1.3) * 0.002;
+
+    for (const m of [cardMat, videoMat]) {
+      m.uniforms.time.value = t;
+      m.uniforms.opacity.value = a;
+      m.uniforms.glitch.value = glitch.current;
+    }
+    cardMat.uniforms.map.value = cards[index] ?? null;
+
+    // video: play the current one while the panel is up
+    if (a > 0.3) {
+      const v = videoFor(index);
+      videos.current.forEach((o, i) => i !== index && !o.el.paused && o.el.pause());
+      if (v.el.paused) v.el.play().catch(() => {});
+      videoMat.uniforms.map.value = v.tex;
+      // cover the video frame like object-fit: cover
+      const vw = v.el.videoWidth || 16,
+        vh = v.el.videoHeight || 9;
+      const frame = CARD.video.w / CARD.video.h,
+        vid = vw / vh;
+      const sx = Math.min(1, frame / vid),
+        sy = Math.min(1, vid / frame);
+      videoMat.uniforms.uvScale.value.set(sx, sy);
+      videoMat.uniforms.uvOffset.value.set((1 - sx) / 2, (1 - sy) / 2);
+    } else videos.current.forEach((o) => o.el.pause());
+
+    beamMat.uniforms.time.value = t;
+    beamMat.uniforms.opacity.value = 0.25 + a * 0.75;
+    beam.current!.scale.set(0.35 + a * 0.65, 0.4 + a * 0.6, 0.35 + a * 0.65);
+
+    // idle emblem fades out as the panel comes up
+    emblem.current!.rotation.y = t * 0.6;
+    emblem.current!.scale.setScalar(1 - a);
+    emblem.current!.visible = a < 0.999;
+    ring.current!.color.setRGB(0.4 + a * 0.8, 1.4 + a * 1.4, 2 + a * 1.6);
+  });
+
+  // where the video sits on the card, in panel coordinates
+  const v = CARD.video;
+  const vx = ((v.x + v.w / 2) / CARD.w - 0.5) * HOLO.width;
+  const vy = (0.5 - (v.y + v.h / 2) / CARD.h) * HOLO.height;
+  const beamH = HOLO.center[1] - HOLO.height / 2 - DESK_TOP - 0.012;
+
+  return (
+    <group>
+      {/* projector puck */}
+      <group position={[px, DESK_TOP, pz]}>
+        <mesh position={[0, 0.006, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.045, 0.05, 0.012, 48]} />
+          <meshStandardMaterial color="#14171d" metalness={0.8} roughness={0.3} />
+        </mesh>
+        <mesh position={[0, 0.0122, 0]} rotation-x={-Math.PI / 2}>
+          <ringGeometry args={[0.026, 0.032, 48]} />
+          <meshBasicMaterial ref={ring} color={[0.4, 1.4, 2]} toneMapped={false} />
+        </mesh>
+        <mesh position={[0, 0.0124, 0]} rotation-x={-Math.PI / 2}>
+          <circleGeometry args={[0.012, 32]} />
+          <meshBasicMaterial color={[0.8, 2, 2.6]} toneMapped={false} />
+        </mesh>
+        {/* beam */}
+        <group ref={beam} position={[0, 0.012, 0]}>
+          <mesh position={[0, beamH / 2, 0]} material={beamMat}>
+            <cylinderGeometry args={[HOLO.width * 0.55, 0.014, beamH, 48, 1, true]} />
+          </mesh>
+        </group>
+        <group>
+          {/* idle emblem: two turning rings and a core */}
+          <group ref={emblem} position={[0, 0.09, 0]}>
+            <mesh>
+              <torusGeometry args={[0.03, 0.0012, 8, 64]} />
+              <meshBasicMaterial color={[0.5, 1.8, 2.4]} toneMapped={false} transparent opacity={0.8} />
+            </mesh>
+            <mesh rotation-x={Math.PI / 2}>
+              <torusGeometry args={[0.022, 0.001, 8, 64]} />
+              <meshBasicMaterial color={[0.5, 1.8, 2.4]} toneMapped={false} transparent opacity={0.6} />
+            </mesh>
+            <mesh>
+              <octahedronGeometry args={[0.008]} />
+              <meshBasicMaterial color={[1, 2.2, 2.8]} toneMapped={false} wireframe />
+            </mesh>
+          </group>
+        </group>
+      </group>
+      <pointLight position={[px, DESK_TOP + 0.12, pz]} color="#5fd6ff" intensity={0.1} distance={0.35} decay={2} />
+
+      {/* the panel */}
+      <group ref={panel} position={HOLO.center}>
+        <mesh
+          material={cardMat}
+          onClick={(e) => (e.stopPropagation(), story.p > 0.95 && onSelect(index))}
+          onPointerOver={() => story.p > 0.95 && setHover(true)}
+          onPointerOut={() => setHover(false)}
+        >
+          <planeGeometry args={[HOLO.width, HOLO.height]} />
+        </mesh>
+        <mesh material={videoMat} position={[vx, vy, 0.001]}>
+          <planeGeometry args={[(v.w / CARD.w) * HOLO.width, (v.h / CARD.h) * HOLO.height]} />
+        </mesh>
+      </group>
+    </group>
+  );
+}

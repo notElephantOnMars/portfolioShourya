@@ -1,6 +1,6 @@
-import { asset } from "./asset";
 import { ProjectCard } from "./components/ProjectCard";
 import { Reveal } from "./components/Reveal";
+import { DeskHero } from "./desk/DeskHero";
 import { projects } from "./projects";
 
 const capabilities: [string, string[]][] = [
@@ -10,118 +10,11 @@ const capabilities: [string, string[]][] = [
   ["Software", ["Python", "MATLAB", "Simulink", "Altium"]],
 ];
 
-function Wheel({ x, cls }: { x: number; cls: string }) {
-  return (
-    <g className={`wheel ${cls}`}>
-      <circle cx={x} cy="278" r="26" fill="#0B0F16" stroke="#26314A" strokeWidth="2" />
-      <circle cx={x} cy="278" r="9" fill="none" stroke="#6FD3F2" strokeWidth="2" />
-      <line x1={x} y1="256" x2={x} y2="300" stroke="#6FD3F2" strokeWidth="2" />
-      <line x1={x - 22} y1="278" x2={x + 22} y2="278" stroke="#6FD3F2" strokeWidth="2" />
-    </g>
-  );
-}
-
 export default function Home() {
   return (
     <>
-      <header className="nav">
-        <div className="nav-inner">
-          <div className="brand">
-            <span className="brand-mark">SB</span>
-            SHOURYA BARANWAL
-          </div>
-          <nav className="links">
-            <a href="#work">Work</a>
-            <a href="#capabilities">Capabilities</a>
-            <a href="#about">About</a>
-            <a href="#contact">Contact</a>
-          </nav>
-          <div className="nav-cta">
-            <a className="btn btn-ghost" href={asset("Shourya Baranwal.pdf")} download="Shourya Baranwal.pdf" target="_blank" rel="noopener">
-              Resume ↓
-            </a>
-            <a className="btn btn-primary" href="#contact">
-              Let&apos;s Connect!
-            </a>
-          </div>
-        </div>
-      </header>
 
-      <section className="hero">
-        <div className="wrap hero-grid">
-          <div>
-            <p className="eyebrow">Mechanical Engineer</p>
-            <h1>
-              Designing projects
-              <br />
-              that <span className="accent">move, adapt,</span>
-              <br />
-              and innovate.
-            </h1>
-            <p className="sub">
-              I&apos;m a third year mechanical engineering student, who yearns to learn more about the complex systems around us that seem
-              simple at first. Mistakes are how I learn, and persistence is key to my unwaivering drive.
-            </p>
-            <div className="hero-actions">
-              <a className="btn btn-primary" href="#work">
-                View projects
-              </a>
-              <a className="btn btn-ghost" href="#contact">
-                Get in touch
-              </a>
-            </div>
-          </div>
-
-          <div className="rig" aria-hidden="true">
-            <svg viewBox="0 0 460 460">
-              <line x1="30" y1="308" x2="430" y2="308" stroke="#26314A" strokeWidth="1.5" />
-              <g className="car">
-                <ellipse cx="240" cy="295" rx="150" ry="9" fill="#000" opacity="0.32" />
-                <Wheel x={320} cls="wheel-rear" />
-                <Wheel x={156} cls="wheel-front" />
-                <path
-                  d="M90,258 C96,236 114,214 138,200 C172,178 208,167 240,164 C272,167 304,176 330,190 C356,204 376,222 388,244 C392,254 388,264 378,270 L360,272 C356,266 348,262 338,262 L142,262 C132,262 124,266 120,272 L102,270 C92,266 88,262 90,258 Z"
-                  fill="#D7DCE4"
-                  stroke="#8A94A6"
-                  strokeWidth="1.5"
-                />
-                <path
-                  d="M110,262 L370,262 C374,266 374,272 370,276 L110,276 C106,272 106,266 110,262 Z"
-                  fill="#B9C1CE"
-                  stroke="#8A94A6"
-                  strokeWidth="1"
-                />
-                <rect x="110" y="270" width="260" height="4" rx="2" fill="#6FD3F2" />
-                <path
-                  d="M185,170 C202,160 238,159 262,165 C282,170 296,180 302,192 L182,192 C180,184 180,176 185,170 Z"
-                  fill="#171D2C"
-                  stroke="#6FD3F2"
-                  strokeWidth="1.5"
-                />
-                <line x1="195" y1="174" x2="240" y2="168" stroke="rgba(111,211,242,0.5)" strokeWidth="2" />
-                <circle cx="96" cy="248" r="4" fill="#FF6A39" />
-              </g>
-            </svg>
-          </div>
-        </div>
-
-        <div className="wrap">
-          <div className="titleblock">
-            <div>
-              VIBECODED BY <span>SHOURYA BARANWAL</span>
-            </div>
-            <div>
-              PERSISTENCE <span>100 of 100</span>
-            </div>
-            <div>
-              MATERIAL <span>I &lt;3 Carbon Fiber</span>
-            </div>
-            <div>
-              STATUS <span>Open for internship</span>
-            </div>
-          </div>
-        </div>
-      </section>
+      <DeskHero />
 
       <Reveal className="about" id="about">
         <div className="wrap about-grid">
@@ -186,8 +79,8 @@ export default function Home() {
             <p>My builds include but are not limited to the following:</p>
           </div>
           <div className="proj-grid">
-            {projects.map((p) => (
-              <ProjectCard key={p.rev} project={p} />
+            {projects.map((p, i) => (
+              <ProjectCard key={p.rev} project={p} index={i} />
             ))}
           </div>
         </div>

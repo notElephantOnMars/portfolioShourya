@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Inter, Space_Grotesk } from "next/font/google";
+import { Instrument_Sans, Spline_Sans_Mono } from "next/font/google";
 import "./globals.css";
 
-// Self-hosted at build time by next/font, so there's no request to Google Fonts and no flash of fallback text.
-const display = Space_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-space-grotesk" });
-const body = Inter({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-inter" });
-const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-plex-mono" });
+// Same type as the Echoes of Exploration (NASA Space Apps) site: Instrument Sans for headings and body,
+// Spline Sans Mono for labels. Self-hosted at build time by next/font.
+const sans = Instrument_Sans({ subsets: ["latin"], style: ["normal", "italic"], variable: "--font-instrument" });
+const mono = Spline_Sans_Mono({ subsets: ["latin"], variable: "--font-mono-face" });
 
 export const metadata: Metadata = {
   title: "Shourya Baranwal — Mechatronics Engineer",
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
+    <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body>{children}</body>
     </html>
   );

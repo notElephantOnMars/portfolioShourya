@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { asset } from "../asset";
 
 export type Project = {
@@ -14,10 +14,16 @@ export type Project = {
 };
 
 // A project card whose case study expands in place (the .card.open styles in globals.css).
-export function ProjectCard({ project: p }: { project: Project }) {
+// The hologram in the hero opens a card by sending an "open-project" event with the card's index.
+export function ProjectCard({ project: p, index }: { project: Project; index: number }) {
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const onOpen = (e: Event) => (e as CustomEvent<number>).detail === index && setOpen(true);
+    window.addEventListener("open-project", onOpen);
+    return () => window.removeEventListener("open-project", onOpen);
+  }, [index]);
   return (
-    <article className={`card${open ? " open" : ""}`}>
+    <article id={`project-${index}`} className={`card${open ? " open" : ""}`} style={{ scrollMarginTop: 24 }}>
       <div className="card-art">
         <span className="rev-tag">{p.rev}</span>
         <video
