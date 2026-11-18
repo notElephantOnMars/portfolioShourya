@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { Instrument_Sans, Spline_Sans_Mono } from "next/font/google";
+import { Instrument_Sans, Pixelify_Sans, Spline_Sans_Mono } from "next/font/google";
 import "./globals.css";
 
 // Same type as the Echoes of Exploration (NASA Space Apps) site: Instrument Sans for headings and body,
 // Spline Sans Mono for labels. Self-hosted at build time by next/font.
 const sans = Instrument_Sans({ subsets: ["latin"], style: ["normal", "italic"], variable: "--font-instrument" });
 const mono = Spline_Sans_Mono({ subsets: ["latin"], variable: "--font-mono-face" });
+// a blocky pixel face for the name on the desk hero
+const pixel = Pixelify_Sans({ subsets: ["latin"], variable: "--font-pixel" });
 
 export const metadata: Metadata = {
   title: "Shourya Baranwal — Mechatronics Engineer",
@@ -14,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable}`}>
+    <html lang="en" className={`${sans.variable} ${mono.variable} ${pixel.variable}`}>
       <body>{children}</body>
     </html>
   );

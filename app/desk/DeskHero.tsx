@@ -13,6 +13,19 @@ const Scene = dynamic(() => import("./Scene"), { ssr: false });
 
 type Mode = "intro" | "zooming" | "holo" | "inspect";
 const FADE_MS = 450;
+// the name and focus above the monitor; a few letters of each light up in turn (index -> animation delay, seconds)
+const NAME = "Shourya Baranwal";
+const NAME_LIT: Record<number, number> = { 0: 0, 4: 2.3, 8: 1.1, 13: 3.4 };
+const ROLE = "Mechanical Engineering · Automotive & Mechatronics";
+const ROLE_LIT: Record<number, number> = { 2: 1.7, 15: 3.9, 27: 0.6, 38: 2.8, 46: 4.3 };
+
+function LitText({ text, lit }: { text: string; lit: Record<number, number> }) {
+  return [...text].map((c, i) => (
+    <span key={i} aria-hidden className={i in lit ? "is-lit" : undefined} style={i in lit ? ({ "--d": `${lit[i]}s` } as React.CSSProperties) : undefined}>
+      {c}
+    </span>
+  ));
+}
 
 // Opens a project's case study in the "Selected Work" section below (ProjectCard listens for this).
 export function openProject(i: number) {
@@ -94,9 +107,14 @@ export function DeskHero() {
         />
       </div>
 
-      {/* intro: a quiet welcome line in the empty space above the monitor */}
+      {/* intro: who this is, quietly, in the empty space above the monitor */}
       <div className={`desk-intro ${mode === "intro" ? "is-on" : ""}`} aria-hidden={mode !== "intro"}>
-        <h1>Welcome to my workbench</h1>
+        <h1 aria-label={NAME}>
+          <LitText text={NAME} lit={NAME_LIT} />
+        </h1>
+        <p aria-label={ROLE}>
+          <LitText text={ROLE} lit={ROLE_LIT} />
+        </p>
       </div>
 
       {/* the monitor's screen: Monitor.tsx pins this layer onto it every frame */}

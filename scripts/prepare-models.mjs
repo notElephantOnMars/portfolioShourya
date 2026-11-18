@@ -1,5 +1,5 @@
 // Turns the raw .glb exports in models-src/ into web-ready files in public/models/.
-//   node scripts/prepare-models.mjs
+//   node scripts/prepare-models.mjs [name ...]
 // - figures: convert materials three.js can't read (spec/gloss) and shrink textures
 // - projects: weld + simplify meshes, keep part names (the inspect view finds parts by name), compress with meshopt
 // - hinge: split the door out of the car body so it can be animated
@@ -205,9 +205,34 @@ function dropTinyParts(size) {
   };
 }
 
-// The delivery robot's wheel base: the 4WD buggy chassis cut down to the real robot's layout (two driven wheels at
-// the back, under the lift, and a ball caster at the front), seated under the T-chassis. Both files are Onshape
-// exports in the same Z-up frame; the robot's front is -Y (sensors) and its back +Y (lift).
+// The delivery robot's wheel base: the 4WD buggy chassis cut down to the real robot's layout (the front pair of driven
+// wheels, a ball caster in the round hole at the plate's nose, and the plate cut off before the lift), seated under the
+// T-chassis. Both files are Onshape exports in the same Z-up frame; the robot's front is -Y (sensors), its back +Y (lift).
+const PLATE_END = 0.005; // buggy frame: the plate is cut off past this y (towards the lift)
+const BALL_Y = -0.1025; // the ball caster sits under the round hole at the plate's nose (about 18 mm across)
+const HOLE_R = 0.0085;
+// drop the plate's triangles past y = end (world y; both decks share a mesh and the same y, so cutting once is enough)
+const cutDone = new Set();
+function cutPlate(node, end) {
+  const m = node.getWorldMatrix();
+  for (const prim of node.getMesh().listPrimitives()) {
+    if (cutDone.has(prim)) continue;
+    cutDone.add(prim);
+    const pos = prim.getAttribute("POSITION");
+    const idx = prim.getIndices();
+    const tri = idx ? Array.from(idx.getArray()) : [...Array(pos.getCount()).keys()];
+    const y = (i) => {
+      const p = pos.getElement(i, []);
+      return m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13];
+    };
+    const keep = [];
+    for (let t = 0; t < tri.length; t += 3)
+      if ((y(tri[t]) + y(tri[t + 1]) + y(tri[t + 2])) / 3 <= end) keep.push(tri[t], tri[t + 1], tri[t + 2]);
+    const out = idx ? idx.clone() : prim.getAttribute("POSITION").clone().setType("SCALAR"); // fresh index accessor
+    prim.setIndices(out.setArray(new Uint32Array(keep)));
+  }
+}
+
 async function addWheelBase(doc) {
   const buggy = await io.read(`${SRC}/buggy.glb`);
   const root = buggy.getRoot();
@@ -226,7 +251,7 @@ async function addWheelBase(doc) {
     }
     return { lo, hi, c: lo.map((v, k) => (v + hi[k]) / 2) };
   };
-  // drop the deck hardware and the front pair of wheels and motors; measure the chassis (two decks) and the
+  // drop the deck hardware and the rear pair of wheels and motors; measure the chassis (two decks) and the
   // wheels that stay
   const chassis = { lo: [Infinity, Infinity, Infinity], hi: [-Infinity, -Infinity, -Infinity] };
   let groundZ = Infinity;
@@ -235,22 +260,24 @@ async function addWheelBase(doc) {
     const name = node.getName();
     const { lo, hi, c } = centre(node);
     const hardware = /screw|standoff|nut|M3 X/i.test(name);
-    const front = c[1] < -0.02 && /wheel|tyre|Motor_Gear|motor mount|Component2/i.test(name);
-    if (hardware || front) {
+    const rear = c[1] > PLATE_END && /wheel|tyre|Motor_Gear|motor mount|Component2/i.test(name);
+    if (hardware || rear) {
       node.setMesh(null);
       continue;
     }
-    if (/chassis/i.test(name))
+    if (/chassis/i.test(name)) {
+      cutPlate(node, PLATE_END);
       for (let k = 0; k < 3; k++) {
         chassis.lo[k] = Math.min(chassis.lo[k], lo[k]);
         chassis.hi[k] = Math.max(chassis.hi[k], hi[k]);
       }
+    }
     if (/wheel|tyre/i.test(name)) groundZ = Math.min(groundZ, lo[2]);
   }
-  // ball caster: a steel ball in a short black holder, under the front of the chassis
+  // ball caster: a steel ball held under a black cylinder that passes up through the hole in the bottom deck
   const cx = (chassis.lo[0] + chassis.hi[0]) / 2;
   const R = 0.0115;
-  const ballY = chassis.lo[1] + 0.025;
+  const ballY = BALL_Y;
   const buf = root.listBuffers()[0] ?? buggy.createBuffer();
   const mesh = (name, positions, normals, indices, material) => {
     const prim = buggy
@@ -290,14 +317,14 @@ async function addWheelBase(doc) {
   const steel = buggy.createMaterial("ball steel").setBaseColorFactor([0.8, 0.82, 0.85, 1]).setMetallicFactor(1).setRoughnessFactor(0.2);
   const black = buggy.createMaterial("caster holder").setBaseColorFactor([0.06, 0.06, 0.07, 1]).setMetallicFactor(0.2).setRoughnessFactor(0.6);
   const ballZ = groundZ + R;
-  const holderTop = chassis.lo[2];
+  const holderTop = chassis.lo[2] + 0.003; // flush with the top of the bottom deck
   const caster = buggy.createNode("Ball caster").setTranslation([cx, ballY, 0]);
   caster.addChild(buggy.createNode("Ball caster ball").setMesh(mesh("ball", ...sphere(R), steel)).setTranslation([0, 0, ballZ]));
   caster.addChild(
     buggy
       .createNode("Ball caster holder")
-      .setMesh(mesh("holder", ...cylinder(R * 0.9, holderTop - (ballZ + R * 0.4)), black))
-      .setTranslation([0, 0, ballZ + R * 0.4]),
+      .setMesh(mesh("holder", ...cylinder(HOLE_R, holderTop - ballZ), black))
+      .setTranslation([0, 0, ballZ]),
   );
   // seat it: chassis top against the robot's T-chassis underside, centred under the whole robot
   const top = chassis.hi[2];
@@ -334,9 +361,12 @@ const jobs = [
   { name: "hinge", ratio: 0.6, edit: splitDoor },
   { name: "robot", ratio: 0.25, edit: async (doc) => (dropTinyParts(0.004)(doc), await addWheelBase(doc)) },
   { name: "aston", ratio: 0.35, tex: 1024 },
+  { name: "drawer" }, // assembled from STLs by scripts/build-drawer.mjs
 ];
 
-for (const job of jobs) {
+// optional names on the command line limit the run to those models
+const only = process.argv.slice(2);
+for (const job of jobs.filter((j) => !only.length || only.includes(j.name))) {
   console.log(job.name);
   const doc = await io.read(`${SRC}/${job.name}.glb`);
   await job.edit?.(doc);

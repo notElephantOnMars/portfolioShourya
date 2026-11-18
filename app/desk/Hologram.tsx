@@ -13,7 +13,8 @@ import { HoloModel } from "./HoloModel";
 import { modelUrl } from "./models";
 
 // The hologram projector in the middle of the desk. Idle, it shows a slowly turning emblem; as the camera zooms in
-// it powers up into a floating panel showing one project (its card, plus its video), which can be cycled and selected.
+// it powers up into a floating panel showing one project (its model turning, and the skills used), which can be cycled
+// and selected.
 
 const holoVertex = "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }";
 const holoFragment = `
@@ -80,7 +81,7 @@ const beamMat = new THREE.ShaderMaterial({
   toneMapped: false,
 });
 
-// room for the spinning model: the card's right-hand area (where a video would play), in metres
+// room for the spinning model: the card's open middle (where a video would play), in metres
 const MODEL_BOX: [number, number] = [(CARD.video.w / CARD.w) * HOLO.width * 0.9, (CARD.video.h / CARD.h) * HOLO.height * 1.1];
 
 export function Hologram({ projects, index, onSelect }: { projects: Project[]; index: number; onSelect: (i: number) => void }) {
@@ -92,7 +93,7 @@ export function Hologram({ projects, index, onSelect }: { projects: Project[]; i
     let live = true;
     document.fonts.ready.then(() => {
       if (!live) return;
-      made = projects.map((p, i) => projectCard(p, i, projects.length));
+      made = projects.map((p) => projectCard(p));
       setCards(made);
     });
     return () => {
@@ -260,7 +261,7 @@ export function Hologram({ projects, index, onSelect }: { projects: Project[]; i
         <mesh material={videoMat} position={[vx, vy, 0.001]} visible={!project.model}>
           <planeGeometry args={[(v.w / CARD.w) * HOLO.width, (v.h / CARD.h) * HOLO.height]} />
         </mesh>
-        {/* the project's model, spinning in front of the right half of the card */}
+        {/* the project's model, spinning in the middle of the card */}
         {project.model && (
           <group position={[vx, vy, 0.05]}>
             <Suspense fallback={null}>

@@ -113,12 +113,12 @@ export const projects: Project[] = [
         {
           match: ["Motor_Gear_Box", "4WD buggy wheel"],
           title: "Drivetrain",
-          body: "Two driven wheels at the back, under the lift. Getting the motors to work together reliably took a lot of iteration; the full write-up covers each issue and fix.",
+          body: "Two driven wheels up front, ahead of the lift. Getting the motors to work together reliably took a lot of iteration; the full write-up covers each issue and fix.",
         },
         {
           match: ["Ball caster"],
           title: "Ball caster",
-          body: "A free-rolling ball at the front carries the nose, so the two driven wheels do all the steering.",
+          body: "A free-rolling ball under the nose, held in a cylinder through the plate, so the two driven wheels do all the steering.",
         },
         {
           match: ["HalfBreadboard"],
@@ -203,6 +203,31 @@ export const projects: Project[] = [
     title: "Custom Drawer Tower",
     summary: "A 3D printed drawer tower, designed using SolidWorks, fitted with 15 small drawers, 1 medium, and 1 large drawer.",
     tags: ["SolidWorks", "For Fun", "3D Printing"],
+    model: {
+      file: "drawer.glb",
+      parts: [
+        {
+          match: ["Drawer_Rack"],
+          title: "Tower shell",
+          body: "Printed at 5% infill, with material cut away between the supporting shelves, which took 2 hours off the print.",
+        },
+        {
+          match: ["DrawerS"],
+          title: "Small drawers ×15",
+          body: "Each drawer's profile is 0.3 mm smaller than its slot, so they slide in smoothly. I now use 0.3 mm for every sliding fit I print.",
+        },
+        {
+          match: ["DrawerM"],
+          title: "Medium drawer",
+          body: "Two small slots wide, for the bulkier parts of the Arduino kit.",
+        },
+        {
+          match: ["DrawerL"],
+          title: "Large drawer",
+          body: "Three slots wide along the bottom row, for boards and cables. Every handle is a Pokéball, just for fun.",
+        },
+      ],
+    },
     details: [
       {
         heading: "Purpose",

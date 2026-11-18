@@ -37,34 +37,19 @@ export function psuReadout(value: string, unit: string, color: string) {
   });
 }
 
-function wrap(g: CanvasRenderingContext2D, text: string, maxW: number) {
-  const lines: string[] = [];
-  let line = "";
-  for (const word of text.split(" ")) {
-    const test = line ? `${line} ${word}` : word;
-    if (g.measureText(test).width > maxW && line) {
-      lines.push(line);
-      line = word;
-    } else line = test;
-  }
-  if (line) lines.push(line);
-  return lines;
-}
+// The hologram's card for one project: just a frame and the skills used, so the spinning model is the focus. The model
+// (or, without one, the project's video) fills the `video` area on its own plane.
+export const CARD = { w: 1280, h: 800, video: { x: 140, y: 70, w: 1000, h: 560 } };
 
-// The hologram's card for one project. The right-hand area is left empty: the project's video plays there on its own plane.
-export const CARD = { w: 1280, h: 800, video: { x: 700, y: 150, w: 540, h: 420 } };
-export function projectCard(p: Project, i: number, n: number) {
+export function projectCard(p: Project) {
   return canvasTexture(CARD.w, CARD.h, (g) => {
-    const display = siteFont("display");
-    const body = siteFont("body");
     const mono = siteFont("mono");
     const cyan = "#7fe3ff";
     g.clearRect(0, 0, CARD.w, CARD.h);
-    // faint fill so the text has something to sit on
-    g.fillStyle = "rgba(14,40,60,0.55)";
+    g.fillStyle = "rgba(14,40,60,0.45)";
     g.fillRect(0, 0, CARD.w, CARD.h);
     // frame with corner brackets
-    g.strokeStyle = "rgba(127,227,255,0.35)";
+    g.strokeStyle = "rgba(127,227,255,0.3)";
     g.lineWidth = 2;
     g.strokeRect(14, 14, CARD.w - 28, CARD.h - 28);
     g.strokeStyle = cyan;
@@ -82,68 +67,22 @@ export function projectCard(p: Project, i: number, n: number) {
       g.lineTo(x, y + dy * L);
       g.stroke();
     }
-    // header
-    g.fillStyle = cyan;
-    g.font = `500 26px ${mono}`;
-    g.fillText(`PROJECT ${String(i + 1).padStart(2, "0")} / ${String(n).padStart(2, "0")}`, 60, 92);
-    g.fillStyle = "#FF8a5c";
-    g.fillText(p.rev, 400, 92);
-    g.fillStyle = "rgba(127,227,255,0.4)";
-    g.fillRect(60, 116, 580, 2);
-    // title
-    g.fillStyle = "#eafaff";
-    g.font = `600 54px ${display}`;
-    let y = 186;
-    for (const line of wrap(g, p.title, 590).slice(0, 3)) {
-      g.fillText(line, 60, y);
-      y += 62;
-    }
-    // summary
-    g.fillStyle = "rgba(220,244,255,0.85)";
-    g.font = `400 26px ${body}`;
-    y += 14;
-    for (const line of wrap(g, p.summary, 590).slice(0, 6)) {
-      g.fillText(line, 60, y);
-      y += 38;
-    }
-    // tags
-    g.font = `500 22px ${mono}`;
-    let x = 60;
-    y = Math.max(y + 24, 600);
-    for (const t of p.tags) {
-      const w = g.measureText(t).width + 28;
-      if (x + w > 660) break;
+    // skills, centred along the bottom
+    g.font = `500 30px ${mono}`;
+    const pad = 22,
+      gap = 16,
+      h = 54;
+    const widths = p.tags.map((t) => g.measureText(t).width + pad * 2);
+    const total = widths.reduce((a, b) => a + b, 0) + gap * (widths.length - 1);
+    let x = (CARD.w - total) / 2;
+    const y = 680;
+    p.tags.forEach((t, i) => {
       g.strokeStyle = "rgba(127,227,255,0.6)";
       g.lineWidth = 2;
-      g.strokeRect(x, y - 30, w, 42);
+      g.strokeRect(x, y, widths[i], h);
       g.fillStyle = cyan;
-      g.fillText(t, x + 14, y);
-      x += w + 12;
-    }
-    // video frame (or, for a 3D model, just its corner marks) and call to action
-    const v = CARD.video;
-    g.strokeStyle = "rgba(127,227,255,0.6)";
-    g.lineWidth = 2;
-    if (p.model) {
-      const m = 24;
-      for (const [x, y, dx, dy] of [
-        [v.x - 8, v.y - 8, 1, 1],
-        [v.x + v.w + 8, v.y - 8, -1, 1],
-        [v.x - 8, v.y + v.h + 8, 1, -1],
-        [v.x + v.w + 8, v.y + v.h + 8, -1, -1],
-      ]) {
-        g.beginPath();
-        g.moveTo(x + dx * m, y);
-        g.lineTo(x, y);
-        g.lineTo(x, y + dy * m);
-        g.stroke();
-      }
-    } else g.strokeRect(v.x - 8, v.y - 8, v.w + 16, v.h + 16);
-    g.fillStyle = cyan;
-    g.font = `500 24px ${mono}`;
-    g.fillText(p.model ? "▸ SELECT TO INSPECT IN 3D" : "▸ SELECT TO OPEN CASE STUDY", 700, 680);
-    g.fillStyle = "rgba(127,227,255,0.55)";
-    g.font = `500 20px ${mono}`;
-    g.fillText("◂ ▸  CYCLE PROJECTS", 700, 720);
+      g.fillText(t, x + pad, y + 37);
+      x += widths[i] + gap;
+    });
   });
 }

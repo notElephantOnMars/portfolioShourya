@@ -36,12 +36,59 @@
   transform: translateY(-10px);
 }
 .desk-intro h1 {
-  font-family: var(--display);
-  font-size: clamp(20px, 2.2vw, 28px);
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  color: rgba(237, 239, 244, 0.42);
+  font-family: var(--font-pixel), var(--display);
+  font-size: clamp(24px, 2.8vw, 36px);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: rgba(237, 239, 244, 0.5);
   margin: 0;
+}
+.desk-intro span {
+  white-space: pre;
+}
+/* a few letters catch the hologram's light: they flick on, glow, then fade back */
+.desk-intro .is-lit {
+  animation: desk-letter 4.6s steps(1, end) infinite;
+  animation-delay: var(--d, 0s);
+}
+@keyframes desk-letter {
+  0%,
+  100% {
+    color: inherit;
+    text-shadow: none;
+  }
+  6% {
+    color: #bff1ff;
+    text-shadow: 0 0 6px rgba(79, 195, 247, 0.9), 0 0 18px rgba(79, 195, 247, 0.45);
+  }
+  8% {
+    color: inherit;
+    text-shadow: none;
+  }
+  10%,
+  38% {
+    color: #bff1ff;
+    text-shadow: 0 0 6px rgba(79, 195, 247, 0.9), 0 0 18px rgba(79, 195, 247, 0.45);
+  }
+  46% {
+    color: inherit;
+    text-shadow: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-intro .is-lit {
+    animation: none;
+    color: #bff1ff;
+    text-shadow: 0 0 6px rgba(79, 195, 247, 0.7);
+  }
+}
+.desk-intro p {
+  font-family: var(--font-pixel), var(--mono);
+  font-size: clamp(11px, 0.95vw, 14px);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(237, 239, 244, 0.28);
+  margin: 10px 0 0;
 }
 /* the layer pinned over the monitor's screen (sized and placed by Monitor.tsx); everything inside scales with
    the screen's width on the page via --screen-w */
