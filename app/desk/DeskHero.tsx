@@ -17,7 +17,7 @@ const FADE_MS = 450;
 const NAME = "Shourya Baranwal";
 const NAME_LIT: Record<number, number> = { 0: 0, 4: 2.3, 8: 1.1, 13: 3.4 };
 const ROLE = "Mechanical Engineering · Automotive & Mechatronics";
-const ROLE_LIT: Record<number, number> = { 2: 1.7, 15: 3.9, 27: 0.6, 38: 2.8, 46: 4.3 };
+const ROLE_LIT: Record<number, number> = { 1: 0.0, 5: 2.4, 9: 1.1, 12: 3.6, 16: 0.5, 20: 2.9, 25: 1.6, 28: 4.1, 31: 0.8, 34: 3.2, 39: 1.9, 42: 0.2, 45: 2.6, 48: 3.9 };
 
 function LitText({ text, lit }: { text: string; lit: Record<number, number> }) {
   return [...text].map((c, i) => (
