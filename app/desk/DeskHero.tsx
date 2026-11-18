@@ -1,6 +1,19 @@
 "use client";
 
-import { BookOpen, Box, ChevronDown, ChevronLeft, ChevronRight, CornerDownLeft, DoorOpen, Download, Mail, Move3d, Power, Undo2 } from "lucide-react";
+import {
+  BookOpen,
+  Box,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  CornerDownLeft,
+  DoorOpen,
+  Download,
+  Mail,
+  Move3d,
+  Power,
+  Undo2,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { asset } from "../asset";
@@ -17,11 +30,45 @@ const FADE_MS = 450;
 const NAME = "Shourya Baranwal";
 const NAME_LIT: Record<number, number> = { 0: 0, 4: 2.3, 8: 1.1, 13: 3.4 };
 const ROLE = "Mechanical Engineering · Automotive & Mechatronics";
-const ROLE_LIT: Record<number, number> = { 1: 0.0, 5: 2.4, 9: 1.1, 12: 3.6, 16: 0.5, 20: 2.9, 25: 1.6, 28: 4.1, 31: 0.8, 34: 3.2, 39: 1.9, 42: 0.2, 45: 2.6, 48: 3.9 };
+const ROLE_LIT: Record<number, number> = {
+  0: 1.5,
+  1: 0.7,
+  3: 3.0,
+  5: 0.3,
+  7: 2.5,
+  9: 1.7,
+  11: 0.3,
+  13: 2.3,
+  15: 0.2,
+  17: 2.0,
+  19: 0.3,
+  20: 0.4,
+  21: 2.0,
+  25: 3.8,
+  27: 0.6,
+  29: 1.0,
+  30: 2.9,
+  31: 4.4,
+  33: 2.7,
+  39: 1.8,
+  40: 4.5,
+  41: 0.2,
+  43: 3.9,
+  45: 1.3,
+  47: 0.7,
+  49: 0.5,
+};
 
 function LitText({ text, lit }: { text: string; lit: Record<number, number> }) {
   return [...text].map((c, i) => (
-    <span key={i} aria-hidden className={i in lit ? "is-lit" : undefined} style={i in lit ? ({ "--d": `${lit[i]}s` } as React.CSSProperties) : undefined}>
+    <span
+      key={i}
+      aria-hidden
+      className={i in lit ? "is-lit" : undefined}
+      style={
+        i in lit ? ({ "--d": `${lit[i]}s` } as React.CSSProperties) : undefined
+      }
+    >
       {c}
     </span>
   ));
@@ -30,7 +77,9 @@ function LitText({ text, lit }: { text: string; lit: Record<number, number> }) {
 // Opens a project's case study in the "Selected Work" section below (ProjectCard listens for this).
 export function openProject(i: number) {
   window.dispatchEvent(new CustomEvent("open-project", { detail: i }));
-  document.getElementById(`project-${i}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  document
+    .getElementById(`project-${i}`)
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 export function DeskHero() {
@@ -46,7 +95,10 @@ export function DeskHero() {
   }, []);
 
   const n = projects.length;
-  const step = useCallback((d: number) => setIndex((i) => (i + d + n) % n), [n]);
+  const step = useCallback(
+    (d: number) => setIndex((i) => (i + d + n) % n),
+    [n],
+  );
   const back = useCallback(() => setMode("intro"), []);
 
   // switching between the hologram and the inspect view: fade to black, swap while it's dark, fade back in
@@ -67,7 +119,10 @@ export function DeskHero() {
     );
   }, []);
   // selecting a project: inspect its 3D model if it has one, otherwise open its case study
-  const select = useCallback((i: number) => (projects[i].model ? fadeTo("inspect") : openProject(i)), [fadeTo]);
+  const select = useCallback(
+    (i: number) => (projects[i].model ? fadeTo("inspect") : openProject(i)),
+    [fadeTo],
+  );
   const toggleDoor = () => {
     story.doorTarget = doorOpen ? 0 : 1;
     setDoorOpen(!doorOpen);
@@ -83,7 +138,8 @@ export function DeskHero() {
       } else if (e.key === "ArrowRight") step(1);
       else if (e.key === "ArrowLeft") step(-1);
       else if (e.key === "Escape") back();
-      else if (e.key === "Enter" && !(e.target instanceof HTMLButtonElement)) select(index);
+      else if (e.key === "Enter" && !(e.target instanceof HTMLButtonElement))
+        select(index);
       else return;
       e.preventDefault();
     };
@@ -108,7 +164,10 @@ export function DeskHero() {
       </div>
 
       {/* intro: who this is, quietly, in the empty space above the monitor */}
-      <div className={`desk-intro ${mode === "intro" ? "is-on" : ""}`} aria-hidden={mode !== "intro"}>
+      <div
+        className={`desk-intro ${mode === "intro" ? "is-on" : ""}`}
+        aria-hidden={mode !== "intro"}
+      >
         <h1 aria-label={NAME}>
           <LitText text={NAME} lit={NAME_LIT} />
         </h1>
@@ -126,7 +185,13 @@ export function DeskHero() {
         aria-hidden={mode !== "intro"}
       >
         <div className="desk-screen-center">
-          <button className="desk-power" type="button" onClick={() => setMode("zooming")} tabIndex={on} aria-describedby="desk-hint">
+          <button
+            className="desk-power"
+            type="button"
+            onClick={() => setMode("zooming")}
+            tabIndex={on}
+            aria-describedby="desk-hint"
+          >
             <Power strokeWidth={2.2} aria-hidden />
             <span className="sr-only">Power on the hologram</span>
           </button>
@@ -135,7 +200,12 @@ export function DeskHero() {
           </p>
         </div>
         <div className="desk-screen-links">
-          <a className="desk-link" href={asset("Shourya Baranwal.pdf")} download="Shourya Baranwal.pdf" tabIndex={on}>
+          <a
+            className="desk-link"
+            href={asset("Shourya Baranwal.pdf")}
+            download="Shourya Baranwal.pdf"
+            tabIndex={on}
+          >
             <Download aria-hidden /> Resume
           </a>
           <a className="desk-link" href="#contact" tabIndex={on}>
@@ -143,29 +213,59 @@ export function DeskHero() {
           </a>
         </div>
       </div>
-      <a className={`desk-scroll ${mode === "intro" ? "is-on" : ""}`} href="#about" tabIndex={mode === "intro" ? 0 : -1}>
+      <a
+        className={`desk-scroll ${mode === "intro" ? "is-on" : ""}`}
+        href="#about"
+        tabIndex={mode === "intro" ? 0 : -1}
+      >
         Or scroll for the full portfolio <ChevronDown size={14} />
       </a>
 
       {/* hologram controls */}
-      <div className={`desk-controls ${mode === "holo" ? "is-on" : ""}`} aria-hidden={mode !== "holo"}>
-        <button className="desk-back" type="button" onClick={back} tabIndex={mode === "holo" ? 0 : -1}>
+      <div
+        className={`desk-controls ${mode === "holo" ? "is-on" : ""}`}
+        aria-hidden={mode !== "holo"}
+      >
+        <button
+          className="desk-back"
+          type="button"
+          onClick={back}
+          tabIndex={mode === "holo" ? 0 : -1}
+        >
           <Undo2 size={15} /> Back to desk <kbd>Esc</kbd>
         </button>
         <div className="desk-bar" role="group" aria-label="Projects">
-          <button className="desk-arrow" type="button" onClick={() => step(-1)} aria-label="Previous project" tabIndex={mode === "holo" ? 0 : -1}>
+          <button
+            className="desk-arrow"
+            type="button"
+            onClick={() => step(-1)}
+            aria-label="Previous project"
+            tabIndex={mode === "holo" ? 0 : -1}
+          >
             <ChevronLeft size={20} />
           </button>
           <div className="desk-now" aria-live="polite">
             <span className="desk-count">
-              {String(index + 1).padStart(2, "0")} / {String(n).padStart(2, "0")}
+              {String(index + 1).padStart(2, "0")} /{" "}
+              {String(n).padStart(2, "0")}
             </span>
             <span className="desk-title">{p.title}</span>
           </div>
-          <button className="desk-arrow" type="button" onClick={() => step(1)} aria-label="Next project" tabIndex={mode === "holo" ? 0 : -1}>
+          <button
+            className="desk-arrow"
+            type="button"
+            onClick={() => step(1)}
+            aria-label="Next project"
+            tabIndex={mode === "holo" ? 0 : -1}
+          >
             <ChevronRight size={20} />
           </button>
-          <button className="btn btn-primary desk-open" type="button" onClick={() => select(index)} tabIndex={mode === "holo" ? 0 : -1}>
+          <button
+            className="btn btn-primary desk-open"
+            type="button"
+            onClick={() => select(index)}
+            tabIndex={mode === "holo" ? 0 : -1}
+          >
             {p.model ? (
               <>
                 Inspect in 3D <Box size={14} />
@@ -202,32 +302,51 @@ export function DeskHero() {
                   onFocus={() => (story.hoverPart = i)}
                   onBlur={() => (story.hoverPart = -1)}
                 />
-                <div className="inspect-tab-card" id={`part-${i}`} role="tooltip">
+                <div
+                  className="inspect-tab-card"
+                  id={`part-${i}`}
+                  role="tooltip"
+                >
                   <strong>{part.title}</strong>
                   <p>{part.body}</p>
                 </div>
               </div>
             ))}
           </div>
-          <button className="desk-back" type="button" onClick={() => fadeTo("holo")}>
+          <button
+            className="desk-back"
+            type="button"
+            onClick={() => fadeTo("holo")}
+          >
             <Undo2 size={15} /> Back to hologram <kbd>Esc</kbd>
           </button>
           <div className="inspect-head">
             <span className="desk-count">
-              {String(index + 1).padStart(2, "0")} / {String(n).padStart(2, "0")} · {p.rev}
+              {String(index + 1).padStart(2, "0")} /{" "}
+              {String(n).padStart(2, "0")} · {p.rev}
             </span>
             <h2>{p.title}</h2>
           </div>
           <div className="inspect-bar">
             <span className="inspect-hint">
-              <Move3d size={15} aria-hidden /> Drag to orbit · scroll to zoom · right-drag to pan · hover a square for details
+              <Move3d size={15} aria-hidden /> Drag to orbit · scroll to zoom ·
+              right-drag to pan · hover a square for details
             </span>
             {p.model.hinge && (
-              <button className="btn btn-primary inspect-door" type="button" onClick={toggleDoor}>
-                <DoorOpen size={14} /> {doorOpen ? "Close the door" : "Open the door"}
+              <button
+                className="btn btn-primary inspect-door"
+                type="button"
+                onClick={toggleDoor}
+              >
+                <DoorOpen size={14} />{" "}
+                {doorOpen ? "Close the door" : "Open the door"}
               </button>
             )}
-            <button className="btn btn-ghost inspect-case" type="button" onClick={() => openProject(index)}>
+            <button
+              className="btn btn-ghost inspect-case"
+              type="button"
+              onClick={() => openProject(index)}
+            >
               <BookOpen size={14} /> Full case study
             </button>
           </div>
