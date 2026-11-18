@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo } from "react";
 import * as THREE from "three";
+import { poseIronMan, poseSpiderMan } from "./figurePoses";
 import { ModelFigure } from "./ModelFigure";
 import { DESK_TOP, SPOT } from "./placement";
 
@@ -230,7 +231,7 @@ export function Figures() {
       </group>
       <group position={[-0.13, 0, 0]} rotation-y={0.18}>
         <Suspense fallback={<IronMan />}>
-          <ModelFigure file="ironman.glb" height={0.13} />
+          <ModelFigure file="ironman.glb" height={0.13} pose={poseIronMan} />
         </Suspense>
       </group>
       <group position={[0.0, 0, -0.03]}>
@@ -240,7 +241,7 @@ export function Figures() {
       </group>
       <group position={[0.14, 0, 0]} rotation-y={-0.2}>
         <Suspense fallback={<SpiderMan />}>
-          <ModelFigure file="spiderman.glb" height={0.125} />
+          <ModelFigure file="spiderman.glb" height={0.125} pose={poseSpiderMan} />
         </Suspense>
       </group>
     </group>

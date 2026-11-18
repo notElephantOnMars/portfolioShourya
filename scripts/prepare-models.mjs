@@ -5,7 +5,7 @@
 // - hinge: split the door out of the car body so it can be animated
 import { NodeIO } from "@gltf-transform/core";
 import { ALL_EXTENSIONS } from "@gltf-transform/extensions";
-import { dedup, metalRough, meshopt, prune, simplify, textureCompress, weld } from "@gltf-transform/functions";
+import { dedup, mergeDocuments, metalRough, meshopt, prune, simplify, textureCompress, weld } from "@gltf-transform/functions";
 import { MeshoptEncoder, MeshoptSimplifier } from "meshoptimizer";
 import sharp from "sharp";
 import { mkdir, stat } from "node:fs/promises";
@@ -101,6 +101,81 @@ function splitDoor(doc) {
     if (twin) node.setName(twin.getName().replace(/-\d+$/, "-B"));
   }
   console.log(`  door: ${door.length / 3} triangles split from the car body`);
+  measureSlide(doc, carNode);
+}
+
+// How far the hinge can slide out before it meets the car's side wall: cast rays from every vertex of the parts that
+// slide, outward along the rail (-Z in the assembly), against the car body, and take the nearest hit (less 2 mm
+// clearance). Stored on the assembly node as extras.slide, which the site reads as userData.slide.
+function measureSlide(doc, carNode) {
+  const xf = (m, p) => [
+    m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12],
+    m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13],
+    m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14],
+  ];
+  const worldVerts = (node) => {
+    const m = node.getWorldMatrix(), out = [], q = [0, 0, 0];
+    for (const prim of node.getMesh().listPrimitives()) {
+      const a = prim.getAttribute("POSITION");
+      for (let i = 0; i < a.getCount(); i++) out.push(xf(m, a.getElement(i, q)));
+    }
+    return out;
+  };
+  // car body triangles in assembly space
+  const cm = carNode.getWorldMatrix();
+  const prim = carNode.getMesh().listPrimitives()[0];
+  const pos = prim.getAttribute("POSITION"), idx = prim.getIndices();
+  const tris = [], q = [0, 0, 0];
+  for (let t = 0; t < idx.getCount(); t += 3)
+    tris.push([0, 1, 2].map((k) => xf(cm, pos.getElement(idx.getScalar(t + k), q))));
+  // ray (origin o, direction -Z) against triangle: Moller-Trumbore with d = (0,0,-1)
+  const hit = (o, [a, b, c]) => {
+    const e1 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], e2 = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+    const p = [e2[1], -e2[0], 0]; // d x e2, with d = (0, 0, -1)
+    const det = e1[0] * p[0] + e1[1] * p[1];
+    if (Math.abs(det) < 1e-12) return Infinity;
+    const s = [o[0] - a[0], o[1] - a[1], o[2] - a[2]];
+    const u = (s[0] * p[0] + s[1] * p[1]) / det;
+    if (u < 0 || u > 1) return Infinity;
+    const qv = [s[1] * e1[2] - s[2] * e1[1], s[2] * e1[0] - s[0] * e1[2], s[0] * e1[1] - s[1] * e1[0]];
+    const v = -qv[2] / det; // d . q with d=(0,0,-1)
+    if (v < 0 || u + v > 1) return Infinity;
+    const t = (e2[0] * qv[0] + e2[1] * qv[1] + e2[2] * qv[2]) / det;
+    return t > 1e-6 ? t : Infinity;
+  };
+  const movers = doc.getRoot().listNodes().filter((n) => n.getMesh() && /^(New Door Hinge|ShaftSupport|SBR16UU)/.test(n.getName()));
+  let best = Infinity, who = "";
+  for (const node of movers) {
+    const verts = worldVerts(node);
+    const step = Math.max(1, Math.floor(verts.length / 400));
+    for (let i = 0; i < verts.length; i += step) {
+      const o = verts[i];
+      for (const tri of tris) {
+        const t = hit(o, tri);
+        if (t < best) {
+          best = t;
+          who = node.getName();
+        }
+      }
+    }
+  }
+  // the bearing also can't run past the end of its rail
+  const zMin = (node) => {
+    let z = Infinity;
+    node.traverse((n) => n.getMesh() && worldVerts(n).forEach((v) => (z = Math.min(z, v[2]))));
+    return z;
+  };
+  const railNode = doc.getRoot().listNodes().find((n) => n.getName() === "Rail");
+  const bearing = doc.getRoot().listNodes().find((n) => n.getName() === "SBR16UU-1");
+  const railTravel = zMin(bearing) - zMin(railNode);
+  console.log(`  wall: ${(best * 1000).toFixed(1)} mm (${who}), rail end: ${(railTravel * 1000).toFixed(1)} mm`);
+  if (railTravel < best) {
+    best = railTravel;
+    who = "the end of the rail";
+  }
+  const slide = Math.max(0, best - 0.002);
+  carNode.listParents().find((x) => x.propertyType === "Node").setExtras({ slide });
+  console.log(`  slide: ${(slide * 1000).toFixed(1)} mm (stopped by ${who})`);
 }
 
 // Drop parts too small to see on the page (the robot's resistors, capacitors and other surface-mount parts):
@@ -130,6 +205,125 @@ function dropTinyParts(size) {
   };
 }
 
+// The delivery robot's wheel base: the 4WD buggy chassis cut down to the real robot's layout (two driven wheels at
+// the back, under the lift, and a ball caster at the front), seated under the T-chassis. Both files are Onshape
+// exports in the same Z-up frame; the robot's front is -Y (sensors) and its back +Y (lift).
+async function addWheelBase(doc) {
+  const buggy = await io.read(`${SRC}/buggy.glb`);
+  const root = buggy.getRoot();
+  const xf = (m, p) => [m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]];
+  const centre = (node) => {
+    const m = node.getWorldMatrix(), lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+    for (const prim of node.getMesh().listPrimitives()) {
+      const a = prim.getAttribute("POSITION");
+      for (const c of [a.getMin([]), a.getMax([])]) {
+        const w = xf(m, c);
+        for (let k = 0; k < 3; k++) {
+          lo[k] = Math.min(lo[k], w[k]);
+          hi[k] = Math.max(hi[k], w[k]);
+        }
+      }
+    }
+    return { lo, hi, c: lo.map((v, k) => (v + hi[k]) / 2) };
+  };
+  // drop the deck hardware and the front pair of wheels and motors; measure the chassis (two decks) and the
+  // wheels that stay
+  const chassis = { lo: [Infinity, Infinity, Infinity], hi: [-Infinity, -Infinity, -Infinity] };
+  let groundZ = Infinity;
+  for (const node of root.listNodes()) {
+    if (!node.getMesh()) continue;
+    const name = node.getName();
+    const { lo, hi, c } = centre(node);
+    const hardware = /screw|standoff|nut|M3 X/i.test(name);
+    const front = c[1] < -0.02 && /wheel|tyre|Motor_Gear|motor mount|Component2/i.test(name);
+    if (hardware || front) {
+      node.setMesh(null);
+      continue;
+    }
+    if (/chassis/i.test(name))
+      for (let k = 0; k < 3; k++) {
+        chassis.lo[k] = Math.min(chassis.lo[k], lo[k]);
+        chassis.hi[k] = Math.max(chassis.hi[k], hi[k]);
+      }
+    if (/wheel|tyre/i.test(name)) groundZ = Math.min(groundZ, lo[2]);
+  }
+  // ball caster: a steel ball in a short black holder, under the front of the chassis
+  const cx = (chassis.lo[0] + chassis.hi[0]) / 2;
+  const R = 0.0115;
+  const ballY = chassis.lo[1] + 0.025;
+  const buf = root.listBuffers()[0] ?? buggy.createBuffer();
+  const mesh = (name, positions, normals, indices, material) => {
+    const prim = buggy
+      .createPrimitive()
+      .setAttribute("POSITION", buggy.createAccessor().setType("VEC3").setArray(new Float32Array(positions)).setBuffer(buf))
+      .setAttribute("NORMAL", buggy.createAccessor().setType("VEC3").setArray(new Float32Array(normals)).setBuffer(buf))
+      .setIndices(buggy.createAccessor().setType("SCALAR").setArray(new Uint16Array(indices)).setBuffer(buf))
+      .setMaterial(material);
+    return buggy.createMesh(name).addPrimitive(prim);
+  };
+  const sphere = (r, seg = 20, rings = 14) => {
+    const p = [], n = [], i = [];
+    for (let a = 0; a <= rings; a++)
+      for (let b = 0; b <= seg; b++) {
+        const t = (a / rings) * Math.PI, f = (b / seg) * Math.PI * 2;
+        const v = [Math.sin(t) * Math.cos(f), Math.sin(t) * Math.sin(f), Math.cos(t)];
+        n.push(...v);
+        p.push(...v.map((x) => x * r));
+      }
+    for (let a = 0; a < rings; a++)
+      for (let b = 0; b < seg; b++) {
+        const k = a * (seg + 1) + b;
+        i.push(k, k + seg + 1, k + 1, k + 1, k + seg + 1, k + seg + 2);
+      }
+    return [p, n, i];
+  };
+  const cylinder = (r, h, seg = 24) => {
+    const p = [], n = [], i = [];
+    for (let b = 0; b <= seg; b++) {
+      const f = (b / seg) * Math.PI * 2, x = Math.cos(f), y = Math.sin(f);
+      p.push(x * r, y * r, 0, x * r, y * r, h);
+      n.push(x, y, 0, x, y, 0);
+    }
+    for (let b = 0; b < seg; b++) i.push(b * 2, b * 2 + 2, b * 2 + 1, b * 2 + 1, b * 2 + 2, b * 2 + 3);
+    return [p, n, i];
+  };
+  const steel = buggy.createMaterial("ball steel").setBaseColorFactor([0.8, 0.82, 0.85, 1]).setMetallicFactor(1).setRoughnessFactor(0.2);
+  const black = buggy.createMaterial("caster holder").setBaseColorFactor([0.06, 0.06, 0.07, 1]).setMetallicFactor(0.2).setRoughnessFactor(0.6);
+  const ballZ = groundZ + R;
+  const holderTop = chassis.lo[2];
+  const caster = buggy.createNode("Ball caster").setTranslation([cx, ballY, 0]);
+  caster.addChild(buggy.createNode("Ball caster ball").setMesh(mesh("ball", ...sphere(R), steel)).setTranslation([0, 0, ballZ]));
+  caster.addChild(
+    buggy
+      .createNode("Ball caster holder")
+      .setMesh(mesh("holder", ...cylinder(R * 0.9, holderTop - (ballZ + R * 0.4)), black))
+      .setTranslation([0, 0, ballZ + R * 0.4]),
+  );
+  // seat it: chassis top against the robot's T-chassis underside, centred under the whole robot
+  const top = chassis.hi[2];
+  const base = buggy.createNode("Wheel base").setTranslation([-0.002 - cx, 0.078, 0.001 - top]);
+  const scene = root.listScenes()[0];
+  for (const child of scene.listChildren()) {
+    scene.removeChild(child);
+    base.addChild(child);
+  }
+  base.addChild(caster);
+  scene.addChild(base);
+  // merge into the robot file
+  mergeDocuments(doc, buggy);
+  const [main, extra] = doc.getRoot().listScenes();
+  for (const child of extra.listChildren()) {
+    extra.removeChild(child);
+    main.addChild(child);
+  }
+  extra.dispose();
+  // one buffer is enough for the meshopt step
+  const [keep, ...rest] = doc.getRoot().listBuffers();
+  for (const a of doc.getRoot().listAccessors()) a.setBuffer(keep);
+  rest.forEach((b) => b.dispose());
+  console.log(`  wheel base added: chassis ${(top - chassis.lo[2]) * 1000 | 0} mm tall, wheels reach ${((top - groundZ) * 1000) | 0} mm below its top`);
+}
+
 const jobs = [
   // figures
   { name: "goku", tex: 1024 },
@@ -138,14 +332,14 @@ const jobs = [
   { name: "hanuman", tex: 512, ratio: 0.35 },
   // projects
   { name: "hinge", ratio: 0.6, edit: splitDoor },
-  { name: "robot", ratio: 0.25, edit: dropTinyParts(0.004) },
+  { name: "robot", ratio: 0.25, edit: async (doc) => (dropTinyParts(0.004)(doc), await addWheelBase(doc)) },
   { name: "aston", ratio: 0.35, tex: 1024 },
 ];
 
 for (const job of jobs) {
   console.log(job.name);
   const doc = await io.read(`${SRC}/${job.name}.glb`);
-  job.edit?.(doc);
+  await job.edit?.(doc);
   await doc.transform(
     metalRough(),
     dedup(),

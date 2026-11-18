@@ -33,19 +33,29 @@ export function standUp(root: THREE.Object3D, upZ?: boolean) {
 }
 
 // ---- the solar car door ----
-// From the design notes: the hinge first slides the door straight out along the rail (the bearing, hinge plate, shaft
-// supports, arms, mounts and door all move together), then the arms, mounts and door turn 30° up about the shaft.
-// All these nodes share one parent (the assembly), so each pose is a transform applied in that parent's space.
-const SLIDE = ["SBR16UU", "New Door Hinge", "ShaftSupport"];
-const LIFT = ["Mounting Arm", "Mounts", "Door"];
-const SLIDE_DIST = 0.06; // metres outward along the rail (-Z in the assembly)
+// From the design notes: the hinge first slides straight out along the rail (bearing and shaft supports, carrying the
+// hinge plate, mounting arms and door), stopping where it meets the car's side wall or the end of the rail, then the
+// hinge plate, mounting arms and door turn 30° up about the shaft. The small angled mount plate at the end of the
+// hinge arm isn't part of this design, so it's hidden. All these nodes share one parent (the assembly), so each pose
+// is a transform in that parent's space.
+const SLIDE = ["SBR16UU", "ShaftSupport"];
+const LIFT = ["New Door Hinge", "Mounting Arm", "Door"];
+const HIDE = ["Mounts"];
+const SLIDE_FALLBACK = 0.02; // metres; the real distance is measured by scripts/prepare-models.mjs (userData.slide)
 const LIFT_ANGLE = THREE.MathUtils.degToRad(30);
 
-export type HingeRig = { slide: THREE.Object3D[]; lift: THREE.Object3D[]; base: Map<THREE.Object3D, THREE.Matrix4>; pivot: THREE.Vector3 };
+export type HingeRig = {
+  slide: THREE.Object3D[];
+  lift: THREE.Object3D[];
+  base: Map<THREE.Object3D, THREE.Matrix4>;
+  pivot: THREE.Vector3;
+  distance: number;
+};
 
 export function rigHinge(root: THREE.Object3D): HingeRig | null {
+  findParts(root, HIDE).forEach((o) => (o.visible = false));
   const slide = findParts(root, SLIDE);
-  const lift = findParts(root, LIFT).filter((o) => !o.name.startsWith(tidy("New Door Hinge")));
+  const lift = findParts(root, LIFT);
   if (!lift.length) return null;
   const base = new Map<THREE.Object3D, THREE.Matrix4>();
   [...slide, ...lift].forEach((o) => {
@@ -59,7 +69,8 @@ export function rigHinge(root: THREE.Object3D): HingeRig | null {
   const box = boundsOf(supports);
   const pivotWorld = new THREE.Vector3((box.min.x + box.max.x) / 2, box.min.y + (box.max.y - box.min.y) * 0.65, 0);
   const pivot = parent.worldToLocal(pivotWorld.clone());
-  return { slide, lift, base, pivot };
+  const distance = typeof parent.userData.slide === "number" ? parent.userData.slide : SLIDE_FALLBACK;
+  return { slide, lift, base, pivot, distance };
 }
 
 // t: 0 = closed, 0..0.5 = sliding out, 0.5..1 = lifting
@@ -70,7 +81,7 @@ const m1 = new THREE.Matrix4(),
 export function poseHinge(rig: HingeRig, t: number) {
   const s = ease(THREE.MathUtils.clamp(t * 2, 0, 1));
   const r = ease(THREE.MathUtils.clamp(t * 2 - 1, 0, 1));
-  const slide = m1.makeTranslation(0, 0, -SLIDE_DIST * s);
+  const slide = m1.makeTranslation(0, 0, -rig.distance * s);
   // rotate about the shaft (Z axis through the pivot); negative turns the door's rear end upward
   const lift = m2
     .makeTranslation(rig.pivot.x, rig.pivot.y, 0)

@@ -13,11 +13,13 @@ export function ModelFigure({
   height,
   base = 0.028,
   material,
+  pose,
 }: {
   file: string;
   height: number;
   base?: number;
   material?: THREE.Material; // replaces every material (the brass idol)
+  pose?: (model: THREE.Object3D) => void; // puts a T-posed figure into a pose (see figurePoses.ts)
 }) {
   const { scene } = useGLTF(asset(`models/${file}`));
   const { model, scale, offset } = useMemo(() => {
@@ -31,12 +33,13 @@ export function ModelFigure({
         if (material) (o as THREE.Mesh).material = material;
       }
     });
+    pose?.(model);
     const box = new THREE.Box3().setFromObject(model);
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
     const scale = height / size.y;
     return { model, scale, offset: new THREE.Vector3(-center.x, -box.min.y, -center.z).multiplyScalar(scale) };
-  }, [scene, height, material]);
+  }, [scene, height, material, pose]);
 
   return (
     <group>

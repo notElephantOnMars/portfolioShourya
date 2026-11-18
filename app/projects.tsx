@@ -28,7 +28,7 @@ export const projects: Project[] = [
     deepDive: "door-hinge-deep-dive.html",
     model: {
       file: "hinge.glb",
-      focus: ["SBR16UU", "New Door Hinge", "Rail", "ShaftSupport", "Mounting Arm", "Mounts"],
+      focus: ["SBR16UU", "New Door Hinge", "Rail", "ShaftSupport", "Mounting Arm"],
       ghost: ["CarBody"],
       hinge: true,
       parts: [
@@ -61,11 +61,6 @@ export const projects: Project[] = [
           match: ["Mounting Arm"],
           title: "Mounting arms",
           body: "Lengthened to stop the door colliding with the car (Issue 01). The longer arm amplified a wobble from the mount spacing (Issue 02), which I'm still fixing.",
-        },
-        {
-          match: ["Mounts"],
-          title: "Door mounts",
-          body: "Where the door meets the hinge. Uneven surface contact here (Issue 03) is being solved with modular mounting methods, now in testing.",
         },
       ],
     },
@@ -114,6 +109,16 @@ export const projects: Project[] = [
           match: ["RaspBerryPi_Pico", "RPI_RP2040"],
           title: "Controller",
           body: "Runs both feedback loops: wall following with two HC-SR04 ultrasonic sensors and line following with an IR emitter/receiver.",
+        },
+        {
+          match: ["Motor_Gear_Box", "4WD buggy wheel"],
+          title: "Drivetrain",
+          body: "Two driven wheels at the back, under the lift. Getting the motors to work together reliably took a lot of iteration; the full write-up covers each issue and fix.",
+        },
+        {
+          match: ["Ball caster"],
+          title: "Ball caster",
+          body: "A free-rolling ball at the front carries the nose, so the two driven wheels do all the steering.",
         },
         {
           match: ["HalfBreadboard"],
