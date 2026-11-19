@@ -13,6 +13,7 @@ export type Project = {
   details: { heading: string; body: React.ReactNode }[];
   deepDive?: string;
   model?: ProjectModel;
+  logo?: string; // a team logo (white on transparent, in public/), shown on the hologram card
 };
 
 // A project card whose case study expands in place (the .card.open styles in globals.css).

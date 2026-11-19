@@ -23,10 +23,11 @@ export type SceneProps = {
   reducedMotion: boolean;
   onArrive: () => void;
   onSelect: (i: number) => void;
+  onStep: (d: number) => void;
   inspect: Project | null; // the project open in the inspect view (the desk is hidden meanwhile)
 };
 
-export default function Scene({ projects, index, zoomed, reducedMotion, onArrive, onSelect, inspect }: SceneProps) {
+export default function Scene({ projects, index, zoomed, reducedMotion, onArrive, onSelect, onStep, inspect }: SceneProps) {
   return (
     <Canvas
       shadows
@@ -49,7 +50,7 @@ export default function Scene({ projects, index, zoomed, reducedMotion, onArrive
         <Figures />
         <Keyboard reducedMotion={reducedMotion} />
         <Mouse />
-        <Hologram projects={projects} index={index} onSelect={onSelect} />
+        <Hologram projects={projects} index={index} onSelect={onSelect} onStep={onStep} />
       </group>
       <CameraRig zoomed={zoomed} paused={!!inspect} reducedMotion={reducedMotion} onArrive={onArrive} />
       {inspect?.model && (

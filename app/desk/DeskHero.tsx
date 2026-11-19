@@ -2,11 +2,7 @@
 
 import {
   BookOpen,
-  Box,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  CornerDownLeft,
   DoorOpen,
   Download,
   Mail,
@@ -159,6 +155,7 @@ export function DeskHero() {
           reducedMotion={reducedMotion}
           onArrive={() => setMode((m) => (m === "zooming" ? "holo" : m))}
           onSelect={select}
+          onStep={step}
           inspect={mode === "inspect" ? p : null}
         />
       </div>
@@ -234,49 +231,10 @@ export function DeskHero() {
         >
           <Undo2 size={15} /> Back to desk <kbd>Esc</kbd>
         </button>
-        <div className="desk-bar" role="group" aria-label="Projects">
-          <button
-            className="desk-arrow"
-            type="button"
-            onClick={() => step(-1)}
-            aria-label="Previous project"
-            tabIndex={mode === "holo" ? 0 : -1}
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <div className="desk-now" aria-live="polite">
-            <span className="desk-count">
-              {String(index + 1).padStart(2, "0")} /{" "}
-              {String(n).padStart(2, "0")}
-            </span>
-            <span className="desk-title">{p.title}</span>
-          </div>
-          <button
-            className="desk-arrow"
-            type="button"
-            onClick={() => step(1)}
-            aria-label="Next project"
-            tabIndex={mode === "holo" ? 0 : -1}
-          >
-            <ChevronRight size={20} />
-          </button>
-          <button
-            className="btn btn-primary desk-open"
-            type="button"
-            onClick={() => select(index)}
-            tabIndex={mode === "holo" ? 0 : -1}
-          >
-            {p.model ? (
-              <>
-                Inspect in 3D <Box size={14} />
-              </>
-            ) : (
-              <>
-                Open case study <CornerDownLeft size={14} />
-              </>
-            )}
-          </button>
-        </div>
+        {/* the hologram itself carries the title and the arrows; this announces the project for screen readers */}
+        <p className="sr-only" aria-live="polite">
+          Project {index + 1} of {n}: {p.title}. Arrow keys switch projects, Enter opens it.
+        </p>
       </div>
 
       {/* inspect view: part tabs (placed over their parts by InspectStage) and controls */}

@@ -75,6 +75,34 @@
     text-shadow: none;
   }
 }
+/* the focus line is fully lit, and its letters flicker off now and then, like a failing sign */
+.desk-intro p .is-lit {
+  animation-name: desk-letter-off;
+}
+@keyframes desk-letter-off {
+  0%,
+  100% {
+    color: inherit;
+    text-shadow: inherit;
+  }
+  4% {
+    color: rgba(237, 239, 244, 0.6);
+    text-shadow: 0 0 6px rgba(237, 239, 244, 0.35);
+  }
+  6% {
+    color: inherit;
+    text-shadow: inherit;
+  }
+  8%,
+  16% {
+    color: rgba(237, 239, 244, 0.6);
+    text-shadow: 0 0 6px rgba(237, 239, 244, 0.35);
+  }
+  18% {
+    color: inherit;
+    text-shadow: inherit;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .desk-intro .is-lit {
     animation: none;
@@ -87,7 +115,8 @@
   font-size: clamp(11px, 0.95vw, 14px);
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(237, 239, 244, 0.28);
+  color: #bff1ff;
+  text-shadow: 0 0 6px rgba(79, 195, 247, 0.75), 0 0 16px rgba(79, 195, 247, 0.35);
   margin: 10px 0 0;
 }
 /* the layer pinned over the monitor's screen (sized and placed by Monitor.tsx); everything inside scales with
@@ -232,19 +261,28 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--text-muted);
-  background: rgba(11, 15, 22, 0.7);
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  font-family: var(--font-pixel), var(--mono);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9fe6ff;
+  text-shadow: 0 0 6px rgba(79, 195, 247, 0.6);
+  background: rgba(14, 40, 60, 0.35);
+  border: 1px solid rgba(127, 227, 255, 0.45);
+  border-radius: 0;
+  box-shadow: 0 0 12px rgba(79, 195, 247, 0.15), inset 0 0 10px rgba(79, 195, 247, 0.1);
   padding: 8px 12px;
   cursor: pointer;
-  transition: color 0.2s ease, border-color 0.2s ease;
+  transition: color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .desk-back:hover {
-  color: var(--cyan);
-  border-color: var(--cyan);
+  color: #dff8ff;
+  border-color: #7fe3ff;
+  box-shadow: 0 0 18px rgba(79, 195, 247, 0.35), inset 0 0 12px rgba(79, 195, 247, 0.18);
+}
+.desk-back kbd {
+  color: rgba(159, 230, 255, 0.6);
+  border-color: rgba(127, 227, 255, 0.35);
 }
 kbd {
   font-family: var(--mono);
@@ -254,70 +292,11 @@ kbd {
   border-radius: 3px;
   padding: 0 5px;
 }
-.desk-bar {
-  position: absolute;
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  width: min(720px, calc(100vw - 32px));
-  background: rgba(11, 15, 22, 0.78);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-}
-.desk-controls:not(.is-on) .desk-bar {
-  transform: translate(-50%, 16px);
-}
-.desk-arrow {
-  flex: none;
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  color: var(--cyan);
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease;
-}
-.desk-arrow:hover {
-  border-color: var(--cyan);
-  background: rgba(111, 211, 242, 0.08);
-}
-.desk-now {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
 .desk-count {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.1em;
   color: var(--cyan);
-}
-.desk-title {
-  font-family: var(--display);
-  font-size: 15px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-.desk-open {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
 }
 
 @media (max-width: 700px) {
@@ -327,22 +306,6 @@ kbd {
   .desk-back {
     top: 16px;
     left: 16px;
-  }
-  .desk-bar {
-    flex-wrap: wrap;
-    bottom: 16px;
-  }
-  .desk-now {
-    order: -1;
-    flex-basis: 100%;
-    margin-bottom: 4px;
-  }
-  .desk-arrow {
-    flex: 1;
-  }
-  .desk-open {
-    flex: 2;
-    justify-content: center;
   }
 }
 @media (prefers-reduced-motion: reduce) {

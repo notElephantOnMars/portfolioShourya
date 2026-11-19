@@ -8,7 +8,7 @@ import { asset } from "../asset";
 import type { Project } from "../components/ProjectCard";
 import { DESK_TOP, HOLO, SPOT } from "./placement";
 import { smoothstep, story } from "./story";
-import { CARD, projectCard } from "./textures";
+import { CARD, HINT, holoArrow, holoHint, projectCard } from "./textures";
 import { HoloModel } from "./HoloModel";
 import { modelUrl } from "./models";
 
@@ -82,18 +82,47 @@ const beamMat = new THREE.ShaderMaterial({
 });
 
 // room for the spinning model: the card's open middle (where a video would play), in metres
-const MODEL_BOX: [number, number] = [(CARD.video.w / CARD.w) * HOLO.width * 0.9, (CARD.video.h / CARD.h) * HOLO.height * 1.1];
+const MODEL_BOX: [number, number] = [(CARD.video.w / CARD.w) * HOLO.width * 0.8, (CARD.video.h / CARD.h) * HOLO.height * 0.8];
 
-export function Hologram({ projects, index, onSelect }: { projects: Project[]; index: number; onSelect: (i: number) => void }) {
+// the arrows either side of the panel: one pixel chevron texture, two materials (each fades and glitches with the panel)
+const arrowMats = [holoMaterial(0), holoMaterial(0)];
+const ARROW_H = 0.05;
+const ARROW_GAP = 0.034; // from the panel's edge to the arrow's centre
+// the hint shown while the panel is hovered, just above the skills
+const hintMat = holoMaterial(0);
+const HINT_TEXT = "Click to take it apart";
+const HINT_Y = 648; // on the card, in its pixels
+
+export function Hologram({
+  projects,
+  index,
+  onSelect,
+  onStep,
+}: {
+  projects: Project[];
+  index: number;
+  onSelect: (i: number) => void;
+  onStep: (d: number) => void;
+}) {
   const [px, pz] = SPOT.projector;
   // project cards, drawn once the site's fonts have loaded so the canvas text uses them
   const [cards, setCards] = useState<THREE.Texture[]>([]);
   useEffect(() => {
     let made: THREE.Texture[] = [];
     let live = true;
-    document.fonts.ready.then(() => {
+    // team logos, if any, load alongside the fonts
+    const loadLogo = (src?: string) =>
+      src
+        ? new Promise<HTMLImageElement | undefined>((done) => {
+            const img = new Image();
+            img.onload = () => done(img);
+            img.onerror = () => done(undefined);
+            img.src = asset(src);
+          })
+        : Promise.resolve(undefined);
+    Promise.all([document.fonts.ready, Promise.all(projects.map((p) => loadLogo(p.logo)))]).then(([, logos]) => {
       if (!live) return;
-      made = projects.map((p) => projectCard(p));
+      made = [...projects.map((p, i) => projectCard(p, logos[i])), holoHint(HINT_TEXT)]; // the cards, then the hover hint
       setCards(made);
     });
     return () => {
@@ -137,10 +166,20 @@ export function Hologram({ projects, index, onSelect }: { projects: Project[]; i
   const emblem = useRef<THREE.Group>(null);
   const ring = useRef<THREE.MeshBasicMaterial>(null);
   const [hover, setHover] = useState(false);
+  const [arrowHover, setArrowHover] = useState(0); // -1 left, 1 right
+  const arrows = useRef<(THREE.Group | null)[]>([]);
+  const [arrowTex] = useState(() => holoArrow());
   useEffect(() => {
-    document.body.style.cursor = hover ? "pointer" : "";
+    arrowMats.forEach((m) => (m.uniforms.map.value = arrowTex));
+    return () => arrowTex.dispose();
+  }, [arrowTex]);
+  const hovered = useRef(false);
+  useEffect(() => void (hovered.current = hover), [hover]);
+  const hint = useRef(0);
+  useEffect(() => {
+    document.body.style.cursor = hover || arrowHover ? "pointer" : "";
     return () => void (document.body.style.cursor = "");
-  }, [hover]);
+  }, [hover, arrowHover]);
 
   // the project models: start loading them all once the hologram powers up, so switching projects is instant
   const preloaded = useRef(false);
@@ -164,12 +203,23 @@ export function Hologram({ projects, index, onSelect }: { projects: Project[]; i
     panel.current!.visible = a > 0.001;
     panel.current!.position.y = HOLO.center[1] + Math.sin(t * 1.3) * 0.002;
 
-    for (const m of [cardMat, videoMat]) {
+    // arrows: drift outward and back, and lean out further while hovered
+    [-1, 1].forEach((d, i) => {
+      const g = arrows.current[i];
+      if (!g) return;
+      const lean = arrowHover === d ? 0.006 : 0;
+      g.position.x = d * (HOLO.width / 2 + ARROW_GAP + lean + Math.max(0, Math.sin(t * 2.2 + i * 1.3)) * 0.003);
+      g.scale.setScalar(THREE.MathUtils.lerp(g.scale.x, arrowHover === d ? 1.15 : 1, Math.min(1, dt * 12)));
+    });
+    for (const m of [cardMat, videoMat, hintMat, ...arrowMats]) {
       m.uniforms.time.value = t;
       m.uniforms.opacity.value = a;
       m.uniforms.glitch.value = glitch.current;
     }
+    hint.current = THREE.MathUtils.lerp(hint.current, hover && !!project.model ? 1 : 0, Math.min(1, dt * 8));
+    hintMat.uniforms.opacity.value = a * hint.current;
     cardMat.uniforms.map.value = cards[index] ?? null;
+    hintMat.uniforms.map.value = cards[projects.length] ?? null;
 
     // video (projects without a 3D model): play the current one while the panel is up
     if (a > 0.3 && !projects[index].model) {
@@ -258,6 +308,24 @@ export function Hologram({ projects, index, onSelect }: { projects: Project[]; i
         >
           <planeGeometry args={[HOLO.width, HOLO.height]} />
         </mesh>
+        {/* hover hint */}
+        <mesh material={hintMat} position={[0, (0.5 - HINT_Y / CARD.h) * HOLO.height, 0.002]} raycast={() => null}>
+          <planeGeometry args={[(HINT.w / CARD.w) * HOLO.width, (HINT.h / CARD.h) * HOLO.height]} />
+        </mesh>
+        {/* hologram arrows either side: cycle projects */}
+        {[-1, 1].map((d, i) => (
+          <group key={d} ref={(g) => void (arrows.current[i] = g)} position={[d * (HOLO.width / 2 + ARROW_GAP), 0, 0]}>
+            <mesh
+              material={arrowMats[i]}
+              rotation-z={d < 0 ? Math.PI : 0}
+              onClick={(e) => (e.stopPropagation(), story.p > 0.95 && !story.inspecting && onStep(d))}
+              onPointerOver={() => story.p > 0.95 && !story.inspecting && setArrowHover(d)}
+              onPointerOut={() => setArrowHover(0)}
+            >
+              <planeGeometry args={[ARROW_H * (144 / 208), ARROW_H]} />
+            </mesh>
+          </group>
+        ))}
         <mesh material={videoMat} position={[vx, vy, 0.001]} visible={!project.model}>
           <planeGeometry args={[(v.w / CARD.w) * HOLO.width, (v.h / CARD.h) * HOLO.height]} />
         </mesh>
@@ -265,7 +333,7 @@ export function Hologram({ projects, index, onSelect }: { projects: Project[]; i
         {project.model && (
           <group position={[vx, vy, 0.05]}>
             <Suspense fallback={null}>
-              <HoloModel key={index} model={project.model} box={modelBox} opacity={() => power.current} />
+              <HoloModel key={index} model={project.model} box={modelBox} opacity={() => power.current} paused={() => hovered.current} />
             </Suspense>
           </group>
         )}

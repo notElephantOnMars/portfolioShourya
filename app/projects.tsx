@@ -26,6 +26,7 @@ export const projects: Project[] = [
       },
     ],
     deepDive: "door-hinge-deep-dive.html",
+    logo: "img/solar-car-logo.png", // University of Calgary Solar Car Team
     model: {
       file: "hinge.glb",
       focus: ["SBR16UU", "New Door Hinge", "Rail", "ShaftSupport", "Mounting Arm"],
