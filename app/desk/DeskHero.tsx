@@ -100,6 +100,7 @@ export function DeskHero() {
   // switching between the hologram and the inspect view: fade to black, swap while it's dark, fade back in
   const [fade, setFade] = useState(false);
   const [doorOpen, setDoorOpen] = useState(false);
+  const [drawersOpen, setDrawersOpen] = useState<boolean[]>([]);
   const timers = useRef<number[]>([]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
   const fadeTo = useCallback((next: Mode) => {
@@ -109,6 +110,8 @@ export function DeskHero() {
         story.inspecting = next === "inspect";
         story.doorTarget = 0;
         setDoorOpen(false);
+        story.drawerOpen = [];
+        setDrawersOpen([]);
         setMode(next);
         timers.current.push(window.setTimeout(() => setFade(false), 120));
       }, FADE_MS),
@@ -119,6 +122,15 @@ export function DeskHero() {
     (i: number) => (projects[i].model ? fadeTo("inspect") : openProject(i)),
     [fadeTo],
   );
+  const toggleDrawer = (i: number) =>
+    setDrawersOpen((open) => {
+      const next = [...open];
+      next[i] = !next[i];
+      return next;
+    });
+  useEffect(() => {
+    story.drawerOpen = drawersOpen; // InspectStage slides the drawers toward this every frame
+  }, [drawersOpen]);
   const toggleDoor = () => {
     story.doorTarget = doorOpen ? 0 : 1;
     setDoorOpen(!doorOpen);
@@ -268,6 +280,31 @@ export function DeskHero() {
                   <strong>{part.title}</strong>
                   <p>{part.body}</p>
                 </div>
+              </div>
+            ))}
+          </div>
+          {/* openable drawers (the drawer tower): round amber markers on the handles, set apart from the part tabs */}
+          <div className="inspect-tabs">
+            {p.model.drawers?.map((d, i) => (
+              <div
+                key={d.node}
+                ref={(el) => {
+                  story.drawerEls[i] = el;
+                }}
+                className={`inspect-drawer ${drawersOpen[i] ? "is-open" : ""}`}
+                style={{ visibility: "hidden" }}
+              >
+                <button
+                  type="button"
+                  className="inspect-drawer-pull"
+                  aria-pressed={!!drawersOpen[i]}
+                  aria-label={`${drawersOpen[i] ? "Close" : "Open"} the ${d.label} drawer`}
+                  onClick={() => toggleDrawer(i)}
+                />
+                <span className="inspect-drawer-label" aria-hidden>
+                  {d.label}
+                  <em>{drawersOpen[i] ? "Click to close" : "Click to open"}</em>
+                </span>
               </div>
             ))}
           </div>

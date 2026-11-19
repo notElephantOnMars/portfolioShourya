@@ -5,6 +5,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { ProjectModel } from "./modelSpec";
+import { drawerContents } from "./drawerContents";
 import { boundsOf, findParts, modelUrl, poseHinge, rigHinge, standUp } from "./models";
 import { story } from "./story";
 
@@ -13,6 +14,20 @@ import { story } from "./story";
 // and lights up a part while its tab is hovered. For the solar car, the door opens on request.
 const DOOR_TIME = 2.6; // seconds for a full open or close (slide, then lift)
 const HIGHLIGHT = new THREE.Color("#4fc3f7");
+// drawer tower: how far a drawer slides out, and how long it takes
+const DRAWER_OUT = 0.04;
+const DRAWER_TIME = 0.6;
+const ease = (x: number) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+
+type Drawer = {
+  node: THREE.Object3D;
+  contents: THREE.Object3D;
+  nodeZ: number; // closed positions
+  contentsZ: number;
+  minZ: number;
+  front: THREE.Vector3; // the handle's front, closed, in the parent's space
+  t: number; // 0 closed .. 1 open
+};
 
 type Part = { anchor: THREE.Object3D; local: THREE.Vector3; materials: THREE.MeshStandardMaterial[] };
 
@@ -68,7 +83,35 @@ export function InspectStage({ spec, reducedMotion }: { spec: ProjectModel; redu
       materials.forEach((m) => (m.userData.emissive = m.emissive.clone()));
       return { anchor: nodes[0], local: nodes[0].worldToLocal(center), materials };
     });
-    return { object, rig, whole, focus, parts };
+    // openable drawers: fill each with its parts (added after the part materials are collected, so hovering a part
+    // tab never lights the contents), and start them all closed. The drawer meshes are compressed (each node carries
+    // a scale), so the contents sit beside the drawer in its parent's space, in metres, and move with it.
+    const drawers: Drawer[] = (spec.drawers ?? []).flatMap((d) => {
+      const mesh = object.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(d.node)) as THREE.Mesh | undefined;
+      if (!mesh?.geometry || !mesh.parent) return [];
+      mesh.updateMatrix();
+      mesh.geometry.computeBoundingBox();
+      const b = mesh.geometry.boundingBox!.clone().applyMatrix4(mesh.matrix); // in the parent's space
+      // the inside: 2 mm walls and floor, from the back wall to the front plate (which is 11.3 mm in from the
+      // front of the handle)
+      const wall = 0.002;
+      const contents = drawerContents(d.contents, b.max.x - b.min.x - 2 * wall, b.max.z - 0.0113 - wall - b.min.z);
+      contents.position.set(b.min.x + wall, b.min.y + wall, b.min.z + wall);
+      mesh.parent.add(contents);
+      return [{ node: mesh, contents, nodeZ: mesh.position.z, contentsZ: contents.position.z, minZ: b.min.z, front: new THREE.Vector3((b.min.x + b.max.x) / 2, (b.min.y + b.max.y) / 2, b.max.z), t: 0 }];
+    });
+    // closed is where the furthest-in drawer sits; move any that start pulled out back in
+    const closed = Math.min(...drawers.map((d) => d.minZ));
+    drawers.forEach((d) => {
+      const back = d.minZ - closed;
+      d.nodeZ -= back;
+      d.contentsZ -= back;
+      d.front.z -= back;
+      d.node.position.z = d.nodeZ;
+      d.contents.position.z = d.contentsZ;
+    });
+    object.updateMatrixWorld(true);
+    return { object, rig, whole, focus, parts, drawers };
   }, [source, spec]);
 
   // frame the focus on entry, with a short dolly-in; open the stage up (no fog, brighter reflections) while here
@@ -94,6 +137,7 @@ export function InspectStage({ spec, reducedMotion }: { spec: ProjectModel; redu
     controls.current?.target.copy(center);
     controls.current?.update();
     story.doorTarget = 0;
+    story.drawerOpen = built.drawers.map(() => false);
     return () => {
       cam.near = prev.near;
       cam.far = prev.far;
@@ -102,6 +146,7 @@ export function InspectStage({ spec, reducedMotion }: { spec: ProjectModel; redu
       scene.environmentIntensity = prev.env;
       story.hoverPart = -1;
       story.tabEls.forEach((el) => el && (el.style.visibility = "hidden"));
+      story.drawerEls.forEach((el) => el && (el.style.visibility = "hidden"));
     };
   }, [built, get, radius, center, wholeRadius, reducedMotion]);
 
@@ -126,6 +171,29 @@ export function InspectStage({ spec, reducedMotion }: { spec: ProjectModel; redu
         built.object.updateMatrixWorld(true);
       }
     }
+    // drawers: slide toward open or closed
+    built.drawers.forEach((d, i) => {
+      const want = story.drawerOpen[i] ? 1 : 0;
+      if (d.t === want) return;
+      const step = reducedMotion ? 1 : dt / DRAWER_TIME;
+      d.t = THREE.MathUtils.clamp(d.t + Math.sign(want - d.t) * step, 0, 1);
+      const out = ease(d.t) * DRAWER_OUT;
+      d.node.position.z = d.nodeZ + out;
+      d.contents.position.z = d.contentsZ + out;
+      d.node.updateMatrixWorld(true);
+      d.contents.updateMatrixWorld(true);
+    });
+    // pin each drawer marker to its drawer's handle
+    built.drawers.forEach((d, i) => {
+      const el = story.drawerEls[i];
+      if (!el) return;
+      v.copy(d.front);
+      v.z += ease(d.t) * DRAWER_OUT;
+      d.node.parent!.localToWorld(v).project(camera);
+      const visible = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1;
+      el.style.visibility = visible ? "visible" : "hidden";
+      el.style.transform = `translate(${(((v.x + 1) / 2) * size.width).toFixed(1)}px, ${(((1 - v.y) / 2) * size.height).toFixed(1)}px)`;
+    });
     // light up the hovered part
     if (lit.current !== story.hoverPart) {
       built.parts[lit.current]?.materials.forEach((m) => m.emissive.copy(m.userData.emissive));

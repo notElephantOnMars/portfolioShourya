@@ -446,6 +446,106 @@ kbd {
   background: rgba(111, 211, 242, 0.4);
   outline: none;
 }
+/* drawer markers: round and amber, so they read as "this opens" rather than "about this part" */
+.inspect-drawer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.inspect-drawer-pull {
+  position: absolute;
+  left: -9px;
+  top: -9px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  pointer-events: auto;
+  cursor: pointer;
+  border-radius: 50%;
+  background: rgba(255, 179, 71, 0.2);
+  border: 1.5px solid #ffb347;
+  box-shadow: 0 0 10px rgba(255, 179, 71, 0.55);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+/* a ring that ripples out, then a dot that turns into a ring while open */
+.inspect-drawer-pull::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 179, 71, 0.8);
+  animation: drawerRipple 2s ease-out infinite;
+}
+.inspect-drawer-pull::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: #ffb347;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+.inspect-drawer.is-open .inspect-drawer-pull::before {
+  animation: none;
+  opacity: 0;
+}
+.inspect-drawer.is-open .inspect-drawer-pull::after {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px #ffb347;
+}
+@keyframes drawerRipple {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
+.inspect-drawer-pull:hover,
+.inspect-drawer-pull:focus-visible {
+  transform: scale(1.2);
+  background: rgba(255, 179, 71, 0.4);
+  outline: none;
+}
+.inspect-drawer-label {
+  position: absolute;
+  left: 16px;
+  top: -9px;
+  white-space: nowrap;
+  font-family: var(--font-pixel), var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffd9a3;
+  text-shadow: 0 0 6px rgba(255, 179, 71, 0.6);
+  background: rgba(20, 13, 4, 0.82);
+  border: 1px solid rgba(255, 179, 71, 0.5);
+  padding: 3px 8px;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+.inspect-drawer-label em {
+  display: block;
+  font-style: normal;
+  font-size: 10px;
+  color: rgba(255, 217, 163, 0.65);
+}
+.inspect-drawer-pull:hover + .inspect-drawer-label,
+.inspect-drawer-pull:focus-visible + .inspect-drawer-label {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .inspect-drawer-pull::before {
+    animation: none;
+  }
+}
 .inspect-tab-card {
   position: absolute;
   left: 16px;

@@ -1,8 +1,17 @@
+import type { DrawerContents } from "./drawerContents";
+
 // How a project's 3D model is shown: on the hologram (spinning) and in the inspect view (fly around, part tabs).
 export type ModelPart = {
   match: string[]; // node-name prefixes (as exported from CAD) that make up this part
   title: string;
   body: string;
+};
+
+// A drawer that slides open in the inspect view, with parts inside (see drawerContents.ts).
+export type ModelDrawer = {
+  node: string; // the drawer's node name, exactly
+  contents: DrawerContents;
+  label: string;
 };
 
 export type ProjectModel = {
@@ -12,4 +21,5 @@ export type ProjectModel = {
   ghost?: string[]; // parts drawn faint in the inspect view, for context
   hinge?: boolean; // the solar car door: animate slide-out then 30° lift
   parts: ModelPart[];
+  drawers?: ModelDrawer[];
 };

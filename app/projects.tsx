@@ -228,6 +228,14 @@ export const projects: Project[] = [
           body: "Three slots wide along the bottom row, for boards and cables. Every handle is a Pokéball, just for fun.",
         },
       ],
+      drawers: [
+        { node: "DrawerL", contents: "jumpers", label: "Jumper wires" },
+        { node: "DrawerM", contents: "lcd", label: "16x2 LCD" },
+        { node: "DrawerS-2", contents: "resistors", label: "Resistors" },
+        { node: "DrawerS-8", contents: "leds", label: "LEDs" },
+        { node: "DrawerS-10", contents: "capacitors", label: "Capacitors" },
+        { node: "DrawerS-14", contents: "buttons", label: "Push buttons" },
+      ],
     },
     details: [
       {
