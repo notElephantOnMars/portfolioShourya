@@ -95,6 +95,8 @@ export const projects: Project[] = [
     model: {
       file: "robot.glb",
       upZ: true,
+      // the fork between the servos and the payload box on it (names as three.js numbers the repeated "Part 1")
+      testDrive: { lift: ["occurrence_of_Part_1_1", "occurrence_of_Part_1_6"], payload: "occurrence_of_Part_1_6", servos: "MIUZEI_MS18", wheels: "4WD buggy wheel v5" },
       parts: [
         {
           match: ["Part_1"],

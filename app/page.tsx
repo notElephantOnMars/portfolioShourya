@@ -94,7 +94,7 @@ export default function Home() {
             </p>
             <h2>Let&apos;s build something.</h2>
             <p style={{ color: "var(--text-muted)", maxWidth: 480, margin: "0 auto 8px" }}>
-              Open to internships Winter 2027, Fall 2027. Building something cool? Let&apos;s connect I would love to know what you are working
+              Open to internships Fall 2027, Winter 2028. Building something cool? Let&apos;s connect I would love to know what you are working
               on!
             </p>
             <a className="btn btn-primary" href="mailto:baranwalshourya@gmail.com">

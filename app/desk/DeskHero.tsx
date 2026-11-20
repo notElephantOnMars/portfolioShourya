@@ -4,6 +4,7 @@ import {
   BookOpen,
   ChevronDown,
   DoorOpen,
+  Gauge,
   Download,
   Mail,
   Move3d,
@@ -101,6 +102,10 @@ export function DeskHero() {
   const [fade, setFade] = useState(false);
   const [doorOpen, setDoorOpen] = useState(false);
   const [drawersOpen, setDrawersOpen] = useState<boolean[]>([]);
+  const [driving, setDriving] = useState(false);
+  useEffect(() => {
+    story.testDrive = driving;
+  }, [driving]);
   const timers = useRef<number[]>([]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
   const fadeTo = useCallback((next: Mode) => {
@@ -112,6 +117,7 @@ export function DeskHero() {
         setDoorOpen(false);
         story.drawerOpen = [];
         setDrawersOpen([]);
+        setDriving(false);
         setMode(next);
         timers.current.push(window.setTimeout(() => setFade(false), 120));
       }, FADE_MS),
@@ -335,6 +341,16 @@ export function DeskHero() {
               >
                 <DoorOpen size={14} />{" "}
                 {doorOpen ? "Close the door" : "Open the door"}
+              </button>
+            )}
+            {p.model.testDrive && (
+              <button
+                className="btn btn-primary inspect-door"
+                type="button"
+                aria-pressed={driving}
+                onClick={() => setDriving((d) => !d)}
+              >
+                <Gauge size={14} /> {driving ? "End test drive" : "Test drive"}
               </button>
             )}
             <button

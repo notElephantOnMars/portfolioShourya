@@ -19,6 +19,38 @@ const DRAWER_OUT = 0.04;
 const DRAWER_TIME = 0.6;
 const ease = (x: number) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
 
+// delivery robot test drive: how far the fork tips up, how fast the wheels turn, and how quickly each eases in
+const LIFT_ANGLE = THREE.MathUtils.degToRad(18);
+const WHEEL_SPEED = 9; // rad/s
+const LIFT_TIME = 1.2;
+const SLIDE_TIME = 0.5; // the payload sliding down the tipped fork
+
+type Spinner = { node: THREE.Object3D; base: THREE.Matrix4; center: THREE.Vector3; axis: THREE.Vector3 };
+const m3 = new THREE.Matrix4();
+// turn a node about an axis through a point (both in its parent's space), on top of its resting transform
+const m1 = new THREE.Matrix4(),
+  m2 = new THREE.Matrix4();
+// `shift` (in the parent's space, before turning) moves the node along whatever it rests on, e.g. down the fork
+function turn(s: Spinner, angle: number, shift?: THREE.Vector3) {
+  s.node.matrix
+    .makeTranslation(s.center.x, s.center.y, s.center.z)
+    .multiply(m1.makeRotationAxis(s.axis, angle))
+    .multiply(m2.makeTranslation(-s.center.x, -s.center.y, -s.center.z));
+  if (shift) s.node.matrix.multiply(m3.makeTranslation(shift.x, shift.y, shift.z));
+  s.node.matrix.multiply(s.base);
+  s.node.matrixWorldNeedsUpdate = true;
+}
+// a spinner for `node` about a world-space axis through a world-space point
+function spinner(node: THREE.Object3D, center: THREE.Vector3, axis: THREE.Vector3): Spinner {
+  const parent = node.parent!;
+  const toLocal = new THREE.Matrix4().copy(parent.matrixWorld).invert();
+  const c = center.clone().applyMatrix4(toLocal);
+  const a = axis.clone().transformDirection(toLocal);
+  node.updateMatrix();
+  node.matrixAutoUpdate = false;
+  return { node, base: node.matrix.clone(), center: c, axis: a };
+}
+
 type Drawer = {
   node: THREE.Object3D;
   contents: THREE.Object3D;
@@ -111,7 +143,74 @@ export function InspectStage({ spec, reducedMotion }: { spec: ProjectModel; redu
       d.contents.position.z = d.contentsZ;
     });
     object.updateMatrixWorld(true);
-    return { object, rig, whole, focus, parts, drawers };
+    // test drive: the fork and payload turn about the line through both servo shafts; each wheel about its axle
+    let drive: { lift: Spinner[]; wheels: Spinner[]; payload: Spinner | null; slide: THREE.Vector3 } | null = null;
+    if (spec.testDrive) {
+      const td = spec.testDrive;
+      const servos = findParts(object, [td.servos]);
+      const sb = boundsOf(servos);
+      // the servos stand upright either side of the fork, shafts facing it, near their tops
+      const pivot = new THREE.Vector3((sb.min.x + sb.max.x) / 2, sb.max.y - 0.009, (sb.min.z + sb.max.z) / 2);
+      const span = new THREE.Vector3().subVectors(boundsOf([servos[0]]).getCenter(new THREE.Vector3()), boundsOf([servos[1] ?? servos[0]]).getCenter(new THREE.Vector3()));
+      const axis = span.lengthSq() > 0 ? span.normalize() : new THREE.Vector3(1, 0, 0);
+      // tip the payload end up: the payload sits on the far side of the pivot from the robot's middle
+      const lift = td.lift.flatMap((n) => {
+        const node = object.getObjectByName(n);
+        return node ? [node] : [];
+      });
+      const payload = boundsOf(lift).getCenter(new THREE.Vector3()).sub(pivot);
+      if (new THREE.Vector3().crossVectors(axis, payload).y < 0) axis.negate();
+      const wheels = findParts(object, [td.wheels]).map((w) => {
+        const b = boundsOf([w]);
+        const size = b.getSize(new THREE.Vector3());
+        // the axle runs along the wheel's thinnest dimension
+        const ax = size.x < size.y && size.x < size.z ? new THREE.Vector3(1, 0, 0) : size.y < size.z ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, 0, 1);
+        return spinner(w, b.getCenter(new THREE.Vector3()), ax);
+      });
+      // the payload's slide: from where it rests, towards the pivot, until its near face meets the first part of the
+      // body in its way (anything beside it, at its height, not part of the lift)
+      const payloadNode = object.getObjectByName(td.payload);
+      let slide = new THREE.Vector3();
+      if (payloadNode) {
+        const pb = boundsOf([payloadNode]);
+        const pc = pb.getCenter(new THREE.Vector3());
+        const dir = new THREE.Vector3(pivot.x - pc.x, 0, pivot.z - pc.z).normalize();
+        const side = new THREE.Vector3(-dir.z, 0, dir.x);
+        const extent = (b: THREE.Box3, d: THREE.Vector3, f: (a: number, c: number) => number, start: number) => {
+          let v = start;
+          for (let i = 0; i < 8; i++) v = f(v, new THREE.Vector3(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z).dot(d));
+          return v;
+        };
+        const near = extent(pb, dir, Math.max, -Infinity);
+        const [s0, s1] = [extent(pb, side, Math.min, Infinity), extent(pb, side, Math.max, -Infinity)];
+        let gap = Infinity;
+        object.traverse((o) => {
+          const m = o as THREE.Mesh;
+          if (!m.isMesh || lift.some((l) => l === m || l.getObjectById(m.id))) return;
+          const b = new THREE.Box3().setFromObject(m);
+          if (b.max.y < pb.min.y || b.min.y > pb.max.y) return; // not at its height
+          if (extent(b, side, Math.max, -Infinity) < s0 || extent(b, side, Math.min, Infinity) > s1) return; // not beside it
+          const face = extent(b, dir, Math.min, Infinity);
+          if (face >= near - 0.0005) gap = Math.min(gap, face - near);
+        });
+        if (isFinite(gap) && gap > 0.0015) {
+          // as a move in the payload's parent's space
+          const toLocal = new THREE.Matrix4().copy(payloadNode.parent!.matrixWorld).invert();
+          slide = pc.clone().addScaledVector(dir, gap - 0.0005).applyMatrix4(toLocal).sub(pc.clone().applyMatrix4(toLocal));
+        }
+      }
+      const liftSpinners = lift.map((n) => spinner(n, pivot, axis));
+      drive = { lift: liftSpinners, wheels, payload: liftSpinners.find((s) => s.node === payloadNode) ?? null, slide };
+      // part tabs pinned to a wheel would spin with it, out of reach: pin them to the wheel's (still) parent instead
+      for (const part of parts) {
+        const w = part && wheels.find((s) => s.node === part.anchor || s.node.getObjectById(part.anchor.id));
+        if (!part || !w) continue;
+        const world = part.anchor.localToWorld(part.local.clone());
+        part.anchor = w.node.parent!;
+        part.local = part.anchor.worldToLocal(world);
+      }
+    }
+    return { object, rig, whole, focus, parts, drawers, drive };
   }, [source, spec]);
 
   // frame the focus on entry, with a short dolly-in; open the stage up (no fog, brighter reflections) while here
@@ -138,6 +237,7 @@ export function InspectStage({ spec, reducedMotion }: { spec: ProjectModel; redu
     controls.current?.update();
     story.doorTarget = 0;
     story.drawerOpen = built.drawers.map(() => false);
+    story.testDrive = false;
     return () => {
       cam.near = prev.near;
       cam.far = prev.far;
@@ -151,6 +251,8 @@ export function InspectStage({ spec, reducedMotion }: { spec: ProjectModel; redu
   }, [built, get, radius, center, wholeRadius, reducedMotion]);
 
   const door = useRef(0);
+  const drive = useRef({ lift: 0, shownLift: 0, slide: 0, shownSlide: 0, speed: 0, angle: 0 });
+  const slideShift = useMemo(() => new THREE.Vector3(), []);
   const lit = useRef(-1);
   const v = useMemo(() => new THREE.Vector3(), []);
   useFrame(({ camera, size }, dt) => {
@@ -169,6 +271,27 @@ export function InspectStage({ spec, reducedMotion }: { spec: ProjectModel; redu
         door.current = t;
         poseHinge(built.rig, t);
         built.object.updateMatrixWorld(true);
+      }
+    }
+    // test drive: raise the fork and spin the wheels up while it's on; ease both back down when it stops
+    if (built.drive) {
+      const d = drive.current;
+      const on = story.testDrive ? 1 : 0;
+      // raise, then slide; on the way back, slide back up first, then lower
+      if (on) d.lift = Math.min(1, d.lift + (reducedMotion ? 1 : dt / LIFT_TIME));
+      if (on && d.lift === 1) d.slide = Math.min(1, d.slide + (reducedMotion ? 1 : dt / SLIDE_TIME));
+      if (!on) d.slide = Math.max(0, d.slide - (reducedMotion ? 1 : dt / SLIDE_TIME));
+      if (!on && d.slide === 0) d.lift = Math.max(0, d.lift - (reducedMotion ? 1 : dt / LIFT_TIME));
+      d.speed = THREE.MathUtils.lerp(d.speed, on * WHEEL_SPEED, Math.min(1, dt * 1.5));
+      if (Math.abs(d.speed) < 0.01 && !on) d.speed = 0;
+      d.angle += d.speed * dt;
+      if (d.lift !== d.shownLift || d.slide !== d.shownSlide || d.speed) {
+        // sliding picks up speed like it's under gravity
+        const shift = slideShift.copy(built.drive.slide).multiplyScalar(d.slide * d.slide);
+        built.drive.lift.forEach((s) => turn(s, ease(d.lift) * LIFT_ANGLE, s === built.drive!.payload ? shift : undefined));
+        built.drive.wheels.forEach((s) => turn(s, d.angle));
+        d.shownLift = d.lift;
+        d.shownSlide = d.slide;
       }
     }
     // drawers: slide toward open or closed
