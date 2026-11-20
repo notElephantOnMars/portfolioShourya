@@ -1,7 +1,9 @@
 /* Tailwind's theme and utilities, without its reset (preflight), so the original styles below look exactly as before. */
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+/* only look for class names in the app's own code, not the big media and HTML files in public/ */
+@source "./";
 
 /* Original site styles, carried over unchanged except that fonts come from next/font (see app/layout.tsx). */
 :root{
