@@ -21,7 +21,7 @@ const ease = (x: number) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) /
 
 // delivery robot test drive: how far the fork tips up, how fast the wheels turn, and how quickly each eases in
 const LIFT_ANGLE = THREE.MathUtils.degToRad(18);
-const WHEEL_SPEED = 9; // rad/s
+const WHEEL_SPEED = 4; // rad/s, a little under one turn a second
 const LIFT_TIME = 1.2;
 const SLIDE_TIME = 0.5; // the payload sliding down the tipped fork
 

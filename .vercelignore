@@ -1,0 +1,5 @@
+# not needed by Vercel: raw model exports, local build output, editor settings
+models-src
+out
+.next
+.claude
