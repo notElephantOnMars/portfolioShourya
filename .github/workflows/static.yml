@@ -22,10 +22,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  # Build and deploy are separate jobs (GitHub's own template): the deploy only starts once the uploaded site is fully
+  # registered, and a failed deploy can be re-run on its own without uploading a second copy.
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -50,6 +49,14 @@ jobs:
         with:
           # The static site Next.js exported
           path: ./out
+
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
